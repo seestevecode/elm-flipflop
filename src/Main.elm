@@ -6,6 +6,7 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Html exposing (Html)
+import List.Extra as ListX
 
 
 main =
@@ -14,20 +15,25 @@ main =
 
 init : Model
 init =
-    [ Card Ace Diamonds True
-    , Card Ten Spades False
-    , Card Jack Clubs True
-    , Card Queen Hearts False
-    , Card King Stars True
-    ]
+    { name = "4-suit"
+    , numFoundations = 4
+    , numSuits = 4
+    }
 
 
 type alias Model =
-    List Card
+    GameType
+
+
+type alias GameType =
+    { name : String
+    , numFoundations : Int
+    , numSuits : Int
+    }
 
 
 type alias Card =
-    { rank : Rank, suit : Suit, faceUp : Bool }
+    { rank : Rank, suit : Suit, faceUp : Bool, id : Int }
 
 
 type Rank
@@ -54,6 +60,53 @@ type Suit
     | Stars
 
 
+deck : GameType -> List Card
+deck gameType =
+    let
+        ranks =
+            List.repeat gameType.numFoundations orderedRanks |> List.concat
+
+        suits =
+            ListX.cycle
+                gameType.numFoundations
+                (List.take gameType.numSuits orderedSuits)
+                |> List.repeat 13
+                |> List.concat
+                |> ListX.gatherEquals
+                |> List.concatMap (\( c, cs ) -> c :: cs)
+
+        allFaceDown =
+            List.repeat (gameType.numFoundations * 13) True
+
+        ids =
+            List.range 1 (gameType.numFoundations * 13)
+    in
+    List.map4 Card ranks suits allFaceDown ids
+
+
+orderedRanks : List Rank
+orderedRanks =
+    [ Ace
+    , Two
+    , Three
+    , Four
+    , Five
+    , Six
+    , Seven
+    , Eight
+    , Nine
+    , Ten
+    , Jack
+    , Queen
+    , King
+    ]
+
+
+orderedSuits : List Suit
+orderedSuits =
+    [ Spades, Hearts, Clubs, Diamonds, Stars ]
+
+
 update : Model -> msg -> Model
 update model msg =
     model
@@ -71,9 +124,9 @@ view model =
         , Background.color <| rgb255 157 120 85
         ]
     <|
-        row [ spacing <| floor (10 * scale) ] <|
-            List.map viewCard model
-                ++ [ viewCardSpace ]
+        column [ spacing <| floor (10 * scale) ] <|
+            List.map viewCard <|
+                deck model
 
 
 viewCard : Card -> Element msg
@@ -107,12 +160,14 @@ viewCardFaceupHead card =
             , bottomRight = 0
             }
         , Background.color <| Tuple.second <| suitOutput card.suit
+        , Font.color <| rgb 1 1 1
         ]
         [ viewRank card.rank
-        , el [ Font.color <| rgb 1 1 1 ] <|
+        , el [] <|
             text <|
                 Tuple.first <|
                     suitOutput card.suit
+        , el [ Font.size 10, alignRight ] <| text <| Debug.toString card.id
         ]
 
 
@@ -171,7 +226,7 @@ globalCardAtts =
 
 viewRank : Rank -> Element msg
 viewRank rank =
-    el [ Font.color <| rgb 1 1 1 ] <|
+    el [] <|
         text <|
             case rank of
                 Ace ->
