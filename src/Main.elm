@@ -212,7 +212,11 @@ viewFoundations model =
 
 viewTableau : Model -> Element msg
 viewTableau model =
-    row [ spacing <| floor (10 * scale) ] <|
+    row
+        [ spacing <| floor (10 * scale)
+        , height <| px 400
+        ]
+    <|
         List.map
             (viewTableauColumn model.board.tableau)
             (Dict.keys model.board.tableau)
@@ -220,18 +224,26 @@ viewTableau model =
 
 viewTableauColumn : Tableau -> Int -> Element msg
 viewTableauColumn tableau colIndex =
-    let
-        colCards =
-            getTableauColumn tableau colIndex
-    in
-    case colCards of
-        [] ->
-            viewCardSpace
+    getTableauColumn tableau colIndex |> viewColumn
 
-        cards ->
-            cards
-                |> List.map viewCard
-                |> column [ alignTop, spacing <| floor (2 * scale) ]
+
+viewColumn : List Card -> Element msg
+viewColumn cards =
+    let
+        col =
+            case cards of
+                [] ->
+                    el globalCardAtts none
+
+                first :: rest ->
+                    el
+                        [ inFront <| viewColumn rest
+                        , moveDown <| 30 * scale
+                        ]
+                    <|
+                        viewCard first
+    in
+    column [ alignTop ] [ col ]
 
 
 getTableauColumn : Tableau -> Int -> List Card
