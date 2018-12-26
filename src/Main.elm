@@ -5,6 +5,7 @@ import Dict exposing (Dict)
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
+import Element.Events as Events
 import Element.Font as Font
 import Html exposing (Html)
 import List.Extra as ListX
@@ -97,6 +98,7 @@ type alias Tableau =
 
 type Msg
     = NewDeck (List Card)
+    | AddCardsFromStock
 
 
 boardFromDeck : GameType -> List Card -> Board
@@ -194,6 +196,38 @@ update msg model =
             , Cmd.none
             )
 
+        AddCardsFromStock ->
+            ( { model
+                | board = addCardsFromStock model.board
+              }
+            , Cmd.none
+            )
+
+
+addCardsFromStock : Board -> Board
+addCardsFromStock board =
+    { board
+        | tableau =
+            let
+                tableauList : List ( Int, List Card )
+                tableauList =
+                    Dict.toList board.tableau
+
+                stockList : List Card
+                stockList =
+                    List.take 1 board.stock
+                        |> List.concat
+            in
+            List.map2
+                (\( k, tabCards ) stockCard ->
+                    ( k, tabCards ++ List.singleton stockCard )
+                )
+                tableauList
+                stockList
+                |> Dict.fromList
+        , stock = List.drop 1 board.stock
+    }
+
 
 scale : Float
 scale =
@@ -236,7 +270,7 @@ viewTableau : Model -> Element Msg
 viewTableau model =
     row
         [ spacing <| floor (10 * scale)
-        , height <| px 400
+        , height <| px 600
         ]
     <|
         List.map
@@ -299,7 +333,9 @@ viewStock model =
         stockSize =
             List.length model.board.stock
     in
-    viewStockRow <| List.repeat stockSize viewCardFacedown
+    el [ Events.onClick AddCardsFromStock, pointer ] <|
+        viewStockRow <|
+            List.repeat stockSize viewCardFacedown
 
 
 viewStockRow : List (Element Msg) -> Element Msg
@@ -359,7 +395,6 @@ viewCardFaceupHead card =
             text <|
                 Tuple.first <|
                     suitOutput card.suit
-        , el [ Font.size 10, alignRight ] <| text <| Debug.toString card.id
         ]
 
 
