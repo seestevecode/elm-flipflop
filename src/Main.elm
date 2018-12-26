@@ -100,7 +100,10 @@ boardFromDeck gameType cards =
                     |> List.take 2
         in
         ( List.head spareCards, ListX.last spareCards )
-    , stock = []
+    , stock =
+        cards
+            |> List.take (gameType.numTableauCards + 2)
+            |> ListX.groupsOf 5
     }
 
 
@@ -186,7 +189,8 @@ view model =
     <|
         column [ spacing <| floor (25 * scale) ]
             [ viewFoundations model
-            , viewSpare model
+                , viewSpare model
+                , viewStock model
             ]
 
 
@@ -222,6 +226,21 @@ viewSpare model =
         ]
 
 
+viewStock : Model -> Element msg
+viewStock model =
+    case model.board.stock of
+        [] ->
+            none
+
+        _ ->
+            let
+                numStockGroups =
+                    List.length model.board.stock
+            in
+            row [ spacing <| floor (10 * scale) ] <|
+                List.repeat numStockGroups viewCardFacedown
+
+
 viewCard : Card -> Element msg
 viewCard card =
     case card.faceUp of
@@ -229,7 +248,7 @@ viewCard card =
             viewCardFaceup card
 
         False ->
-            viewCardFacedown card
+            viewCardFacedown
 
 
 viewCardFaceup : Card -> Element msg
@@ -283,8 +302,8 @@ viewCardFaceupBody card =
                 suitOutput card.suit
 
 
-viewCardFacedown : Card -> Element msg
-viewCardFacedown card =
+viewCardFacedown : Element msg
+viewCardFacedown =
     let
         innerScale =
             1.05
