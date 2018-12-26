@@ -114,6 +114,7 @@ boardFromDeck gameType cards =
                 cards
                     |> List.drop gameType.numTableauCards
                     |> List.take 2
+                    |> List.map turnUp
         in
         ( List.head spareCards, ListX.last spareCards )
     , stock =
