@@ -137,6 +137,7 @@ buildTableau gameType cards =
     in
     List.map2 Tuple.pair tableauIndices tableauColumns
         |> Dict.fromList
+        |> turnUpEndCards
 
 
 deck : GameType -> List Card
@@ -155,7 +156,7 @@ deck gameType =
                 |> List.concatMap (\( c, cs ) -> c :: cs)
 
         allFaceDown =
-            List.repeat (gameType.numFoundations * 13) True
+            List.repeat (gameType.numFoundations * 13) False
 
         ids =
             List.range 1 (gameType.numFoundations * 13)
@@ -185,6 +186,20 @@ orderedSuits : List Suit
 orderedSuits =
     [ Spades, Hearts, Clubs, Diamonds, Stars ]
 
+
+turnUpEndCards : Tableau -> Tableau
+turnUpEndCards tableau =
+    tableau
+    |> Dict.map (\_ cards ->
+        case List.reverse cards of
+            [] -> []
+            last :: restReversed ->
+                turnUp last :: restReversed |> List.reverse
+    )
+
+turnUp : Card -> Card
+turnUp card =
+    { card | faceUp = True }
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
