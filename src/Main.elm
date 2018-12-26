@@ -1,6 +1,7 @@
 module Main exposing (main)
 
 import Browser
+import Dict exposing (Dict)
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
@@ -15,20 +16,40 @@ main =
 
 init : Model
 init =
-    { name = "4-suit"
-    , numFoundations = 4
-    , numSuits = 4
+    let
+        gameType =
+            { name = "4-suit"
+            , numFoundations = 4
+            , numSuits = 4
+            , numTableauCards = 25
+            , tableauColSizes = [ 5, 5, 5, 5, 5 ]
+            }
+    in
+    { gameType = gameType
+    , board = boardFromDeck gameType <| deck gameType
     }
 
 
 type alias Model =
-    GameType
+    { gameType : GameType
+    , board : Board
+    }
 
 
 type alias GameType =
     { name : String
     , numFoundations : Int
     , numSuits : Int
+    , numTableauCards : Int
+    , tableauColSizes : List Int
+    }
+
+
+type alias Board =
+    { foundations : List (List Card)
+    , tableau : Tableau
+    , spare : ( Maybe Card, Maybe Card )
+    , stock : List (List Card)
     }
 
 
@@ -58,6 +79,45 @@ type Suit
     | Clubs
     | Diamonds
     | Stars
+
+
+type alias Tableau =
+    Dict Int (List Card)
+
+
+boardFromDeck : GameType -> List Card -> Board
+boardFromDeck gameType cards =
+    { foundations = List.repeat gameType.numFoundations []
+    , tableau =
+        cards
+            |> List.take gameType.numTableauCards
+            |> buildTableau gameType
+    , spare =
+        let
+            spareCards =
+                cards
+                    |> List.drop gameType.numTableauCards
+                    |> List.take 2
+        in
+        ( List.head spareCards, ListX.last spareCards )
+    , stock = []
+    }
+
+
+buildTableau : GameType -> List Card -> Tableau
+buildTableau gameType cards =
+    let
+        tableauIndices =
+            List.range 0 4
+
+        tableauColSizes =
+            gameType.tableauColSizes
+
+        tableauColumns =
+            ListX.groupsOfVarying tableauColSizes cards
+    in
+    List.map2 Tuple.pair tableauIndices tableauColumns
+        |> Dict.fromList
 
 
 deck : GameType -> List Card
@@ -126,7 +186,7 @@ view model =
     <|
         column [ spacing <| floor (10 * scale) ] <|
             List.map viewCard <|
-                deck model
+                deck model.gameType
 
 
 viewCard : Card -> Element msg
