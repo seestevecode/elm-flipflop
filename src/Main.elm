@@ -8,26 +8,36 @@ import Element.Border as Border
 import Element.Font as Font
 import Html exposing (Html)
 import List.Extra as ListX
+import Random
+import Random.List
 
 
 main =
-    Browser.sandbox { init = init, update = update, view = view }
+    Browser.element
+        { init = init
+        , update = update
+        , view = view
+        , subscriptions = subscriptions
+        }
 
 
-init : Model
-init =
+init : () -> ( Model, Cmd Msg )
+init _ =
     let
         gameType =
             { name = "4-suit"
-            , numFoundations = 5
-            , numSuits = 1
-            , numTableauCards = 28
-            , tableauColSizes = [ 6, 6, 6, 5, 5 ]
+            , numFoundations = 4
+            , numSuits = 4
+            , numTableauCards = 25
+            , tableauColSizes = [ 5, 5, 5, 5, 5 ]
             }
     in
-    { gameType = gameType
-    , board = boardFromDeck gameType <| deck gameType
-    }
+    ( { gameType = gameType
+      , board = boardFromDeck gameType <| deck gameType
+      }
+    , Random.generate NewDeck <|
+        Random.List.shuffle (deck gameType)
+    )
 
 
 type alias Model =
@@ -83,6 +93,10 @@ type Suit
 
 type alias Tableau =
     Dict Int (List Card)
+
+
+type Msg
+    = NewDeck (List Card)
 
 
 boardFromDeck : GameType -> List Card -> Board
@@ -170,9 +184,15 @@ orderedSuits =
     [ Spades, Hearts, Clubs, Diamonds, Stars ]
 
 
-update : Model -> msg -> Model
-update model msg =
-    model
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        NewDeck cards ->
+            ( { model
+                | board = boardFromDeck model.gameType cards
+              }
+            , Cmd.none
+            )
 
 
 scale : Float
@@ -180,7 +200,7 @@ scale =
     1
 
 
-view : Model -> Html msg
+view : Model -> Html Msg
 view model =
     layout
         [ padding <| floor (10 * scale)
@@ -195,7 +215,7 @@ view model =
             ]
 
 
-viewFoundations : Model -> Element msg
+viewFoundations : Model -> Element Msg
 viewFoundations model =
     row [ spacing <| floor (10 * scale) ] <|
         List.indexedMap
@@ -210,7 +230,7 @@ viewFoundations model =
             model.board.foundations
 
 
-viewTableau : Model -> Element msg
+viewTableau : Model -> Element Msg
 viewTableau model =
     row
         [ spacing <| floor (10 * scale)
@@ -222,12 +242,12 @@ viewTableau model =
             (Dict.keys model.board.tableau)
 
 
-viewTableauColumn : Tableau -> Int -> Element msg
+viewTableauColumn : Tableau -> Int -> Element Msg
 viewTableauColumn tableau colIndex =
     getTableauColumn tableau colIndex |> viewColumn
 
 
-viewColumn : List Card -> Element msg
+viewColumn : List Card -> Element Msg
 viewColumn cards =
     let
         col =
@@ -254,7 +274,7 @@ getTableauColumn tableau colIndex =
         |> List.concat
 
 
-viewSpare : Model -> Element msg
+viewSpare : Model -> Element Msg
 viewSpare model =
     let
         viewSingleSpare spare =
@@ -271,7 +291,7 @@ viewSpare model =
         ]
 
 
-viewStock : Model -> Element msg
+viewStock : Model -> Element Msg
 viewStock model =
     case model.board.stock of
         [] ->
@@ -286,7 +306,7 @@ viewStock model =
                 List.repeat numStockGroups viewCardFacedown
 
 
-viewCard : Card -> Element msg
+viewCard : Card -> Element Msg
 viewCard card =
     case card.faceUp of
         True ->
@@ -296,14 +316,14 @@ viewCard card =
             viewCardFacedown
 
 
-viewCardFaceup : Card -> Element msg
+viewCardFaceup : Card -> Element Msg
 viewCardFaceup card =
     column
         (globalCardAtts ++ [ Background.color <| rgb 1 1 1 ])
         [ viewCardFaceupHead card, viewCardFaceupBody card ]
 
 
-viewCardFaceupHead : Card -> Element msg
+viewCardFaceupHead : Card -> Element Msg
 viewCardFaceupHead card =
     row
         [ padding <| floor (3 * scale)
@@ -328,7 +348,7 @@ viewCardFaceupHead card =
         ]
 
 
-viewCardFaceupBody : Card -> Element msg
+viewCardFaceupBody : Card -> Element Msg
 viewCardFaceupBody card =
     el
         [ Font.size <| floor (75 * scale)
@@ -347,7 +367,7 @@ viewCardFaceupBody card =
                 suitOutput card.suit
 
 
-viewCardFacedown : Element msg
+viewCardFacedown : Element Msg
 viewCardFacedown =
     let
         innerScale =
@@ -368,12 +388,12 @@ viewCardFacedown =
             none
 
 
-viewCardSpace : Element msg
+viewCardSpace : Element Msg
 viewCardSpace =
     el (globalCardAtts ++ [ Background.color <| rgba 0 0 0 0.25 ]) <| none
 
 
-globalCardAtts : List (Attribute msg)
+globalCardAtts : List (Attribute Msg)
 globalCardAtts =
     [ Border.rounded <| floor (4 * scale)
     , width <| px <| floor (68 * scale)
@@ -381,7 +401,7 @@ globalCardAtts =
     ]
 
 
-viewRank : Rank -> Element msg
+viewRank : Rank -> Element Msg
 viewRank rank =
     el [] <|
         text <|
@@ -443,3 +463,8 @@ suitOutput suit =
 
         Stars ->
             ( "★", rgb255 109 167 128 )
+
+
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+    Sub.none
