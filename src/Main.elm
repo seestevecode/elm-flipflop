@@ -14,11 +14,11 @@ main =
 
 init : Model
 init =
-    [ Card Ace Diamonds
-    , Card Ten Spades
-    , Card Jack Clubs
-    , Card Queen Hearts
-    , Card King Stars
+    [ Card Ace Diamonds True
+    , Card Ten Spades False
+    , Card Jack Clubs True
+    , Card Queen Hearts False
+    , Card King Stars True
     ]
 
 
@@ -27,7 +27,7 @@ type alias Model =
 
 
 type alias Card =
-    { rank : Rank, suit : Suit }
+    { rank : Rank, suit : Suit, faceUp : Bool }
 
 
 type Rank
@@ -82,47 +82,86 @@ view model =
 
 viewCard : Card -> Element msg
 viewCard card =
+    case card.faceUp of
+        True ->
+            viewCardFaceup card
+
+        False ->
+            viewCardFacedown card
+
+
+viewCardFaceup : Card -> Element msg
+viewCardFaceup card =
     column
-        [ Border.rounded round
-        , Background.color <| rgb 1 1 1
-        , width <| px <| floor (68 * scale)
-        , height <| px <| floor (105 * scale)
+        (globalCardAtts ++ [ Background.color <| rgb 1 1 1 ])
+        [ viewCardFaceupHead card, viewCardFaceupBody card ]
+
+
+viewCardFaceupHead : Card -> Element msg
+viewCardFaceupHead card =
+    row
+        [ padding <| floor (3 * scale)
+        , width fill
+        , Font.size <| floor (20 * scale)
+        , spacing <| floor (3 * scale)
+        , Border.roundEach
+            { topLeft = round
+            , topRight = round
+            , bottomLeft = 0
+            , bottomRight = 0
+            }
+        , Background.color <| Tuple.second <| suitOutput card.suit
         ]
-        [ row
-            [ padding <| floor (3 * scale)
-            , width fill
-            , Font.size <| floor (20 * scale)
-            , spacing <| floor (3 * scale)
-            , Border.roundEach
-                { topLeft = round
-                , topRight = round
-                , bottomLeft = 0
-                , bottomRight = 0
-                }
-            , Background.color <| Tuple.second <| suitOutput card.suit
-            ]
-            [ viewRank card.rank
-            , el [ Font.color <| rgb 1 1 1 ] <|
-                text <|
-                    Tuple.first <|
-                        suitOutput card.suit
-            ]
-        , el
-            [ Font.size <| floor (75 * scale)
-            , centerX
-            , Font.color <| Tuple.second <| suitOutput card.suit
-            , paddingEach
-                { bottom = floor (10 * scale)
-                , left = 0
-                , right = 0
-                , top = 0
-                }
-            ]
-          <|
+        [ viewRank card.rank
+        , el [ Font.color <| rgb 1 1 1 ] <|
             text <|
                 Tuple.first <|
                     suitOutput card.suit
         ]
+
+
+viewCardFaceupBody : Card -> Element msg
+viewCardFaceupBody card =
+    el
+        [ Font.size <| floor (75 * scale)
+        , centerX
+        , Font.color <| Tuple.second <| suitOutput card.suit
+        , paddingEach
+            { bottom = floor (10 * scale)
+            , left = 0
+            , right = 0
+            , top = 0
+            }
+        ]
+    <|
+        text <|
+            Tuple.first <|
+                suitOutput card.suit
+
+
+viewCardFacedown : Card -> Element msg
+viewCardFacedown card =
+    el
+        (globalCardAtts ++ [ Background.color <| rgb 1 1 1 ])
+    <|
+        el
+            [ Border.rounded <| floor (4 * scale / 1.05)
+            , width <| px <| floor (68 * scale / 1.05)
+            , height <| px <| floor (105 * scale / 1.05)
+            , Background.color <| rgb255 44 49 64
+            , centerX
+            , centerY
+            ]
+        <|
+            none
+
+
+globalCardAtts : List (Attribute msg)
+globalCardAtts =
+    [ Border.rounded <| floor (4 * scale)
+    , width <| px <| floor (68 * scale)
+    , height <| px <| floor (105 * scale)
+    ]
 
 
 viewRank : Rank -> Element msg
