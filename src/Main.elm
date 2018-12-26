@@ -19,10 +19,10 @@ init =
     let
         gameType =
             { name = "4-suit"
-            , numFoundations = 4
-            , numSuits = 4
-            , numTableauCards = 25
-            , tableauColSizes = [ 5, 5, 5, 5, 5 ]
+            , numFoundations = 5
+            , numSuits = 1
+            , numTableauCards = 28
+            , tableauColSizes = [ 6, 6, 6, 5, 5 ]
             }
     in
     { gameType = gameType
@@ -189,8 +189,10 @@ view model =
     <|
         column [ spacing <| floor (25 * scale) ]
             [ viewFoundations model
-                , viewSpare model
-                , viewStock model
+            , viewTableau model
+            , viewSpare model
+            , viewStock model
+            , paragraph [ Font.size 10 ] [ text <| Debug.toString model.board]
             ]
 
 
@@ -207,6 +209,38 @@ viewFoundations model =
                         viewCard last
             )
             model.board.foundations
+
+
+viewTableau : Model -> Element msg
+viewTableau model =
+    row [ spacing <| floor (10 * scale) ] <|
+        List.map
+            (viewTableauColumn model.board.tableau)
+            (Dict.keys model.board.tableau)
+
+
+viewTableauColumn : Tableau -> Int -> Element msg
+viewTableauColumn tableau colIndex =
+    let
+        colCards =
+            getTableauColumn tableau colIndex
+    in
+    case colCards of
+        [] ->
+            viewCardSpace
+
+        cards ->
+            cards
+                |> List.map viewCard
+                |> column [ alignTop, spacing <| floor (2 * scale) ]
+
+
+getTableauColumn : Tableau -> Int -> List Card
+getTableauColumn tableau colIndex =
+    tableau
+        |> Dict.filter (\k _ -> k == colIndex)
+        |> Dict.values
+        |> List.concat
 
 
 viewSpare : Model -> Element msg
