@@ -210,8 +210,10 @@ view model =
         column [ spacing <| floor (25 * scale) ]
             [ viewFoundations model
             , viewTableau model
-            , viewSpare model
-            , viewStock model
+            , row [ width fill ]
+                [ el [ alignLeft ] <| viewSpare model
+                , el [ alignRight ] <| viewStock model
+                ]
             ]
 
 
@@ -293,17 +295,30 @@ viewSpare model =
 
 viewStock : Model -> Element Msg
 viewStock model =
-    case model.board.stock of
-        [] ->
-            none
+    let
+        stockSize =
+            List.length model.board.stock
+    in
+    viewStockRow <| List.repeat stockSize viewCardFacedown
 
-        _ ->
-            let
-                numStockGroups =
-                    List.length model.board.stock
-            in
-            row [ spacing <| floor (10 * scale) ] <|
-                List.repeat numStockGroups viewCardFacedown
+
+viewStockRow : List (Element Msg) -> Element Msg
+viewStockRow els =
+    let
+        rowContent =
+            case els of
+                [] ->
+                    none
+
+                first :: rest ->
+                    el
+                        [ inFront <| viewStockRow rest
+                        , moveRight 15
+                        ]
+                    <|
+                        first
+    in
+    row [] [ rowContent ]
 
 
 viewCard : Card -> Element Msg
