@@ -294,7 +294,7 @@ viewColumn cards =
                 first :: rest ->
                     el
                         [ inFront <| viewColumn rest
-                        , moveDown <| 30 * scale
+                        , moveDown <| 24 * scale
                         ]
                     <|
                         viewCard first
