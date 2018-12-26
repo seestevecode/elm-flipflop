@@ -102,7 +102,7 @@ boardFromDeck gameType cards =
         ( List.head spareCards, ListX.last spareCards )
     , stock =
         cards
-            |> List.take (gameType.numTableauCards + 2)
+            |> List.drop (gameType.numTableauCards + 2)
             |> ListX.groupsOf 5
     }
 
@@ -192,7 +192,6 @@ view model =
             , viewTableau model
             , viewSpare model
             , viewStock model
-            , paragraph [ Font.size 10 ] [ text <| Debug.toString model.board]
             ]
 
 
