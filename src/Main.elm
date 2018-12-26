@@ -64,11 +64,6 @@ scale =
     1
 
 
-round : Int
-round =
-    floor <| 4 * scale
-
-
 view : Model -> Html msg
 view model =
     layout
@@ -78,6 +73,7 @@ view model =
     <|
         row [ spacing <| floor (10 * scale) ] <|
             List.map viewCard model
+                ++ [ viewCardSpace ]
 
 
 viewCard : Card -> Element msg
@@ -105,8 +101,8 @@ viewCardFaceupHead card =
         , Font.size <| floor (20 * scale)
         , spacing <| floor (3 * scale)
         , Border.roundEach
-            { topLeft = round
-            , topRight = round
+            { topLeft = floor (4 * scale)
+            , topRight = floor (4 * scale)
             , bottomLeft = 0
             , bottomRight = 0
             }
@@ -141,19 +137,28 @@ viewCardFaceupBody card =
 
 viewCardFacedown : Card -> Element msg
 viewCardFacedown card =
+    let
+        innerScale =
+            1.05
+    in
     el
         (globalCardAtts ++ [ Background.color <| rgb 1 1 1 ])
     <|
         el
-            [ Border.rounded <| floor (4 * scale / 1.05)
-            , width <| px <| floor (68 * scale / 1.05)
-            , height <| px <| floor (105 * scale / 1.05)
+            [ Border.rounded <| floor (4 * scale / innerScale)
+            , width <| px <| floor (68 * scale / innerScale)
+            , height <| px <| floor (105 * scale / innerScale)
             , Background.color <| rgb255 44 49 64
             , centerX
             , centerY
             ]
         <|
             none
+
+
+viewCardSpace : Element msg
+viewCardSpace =
+    el (globalCardAtts ++ [ Background.color <| rgba 0 0 0 0.25 ]) <| none
 
 
 globalCardAtts : List (Attribute msg)
