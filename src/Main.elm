@@ -191,16 +191,21 @@ orderedSuits =
 turnUpEndCards : Tableau -> Tableau
 turnUpEndCards tableau =
     tableau
-    |> Dict.map (\_ cards ->
-        case List.reverse cards of
-            [] -> []
-            last :: restReversed ->
-                turnUp last :: restReversed |> List.reverse
-    )
+        |> Dict.map
+            (\_ cards ->
+                case List.reverse cards of
+                    [] ->
+                        []
+
+                    last :: restReversed ->
+                        turnUp last :: restReversed |> List.reverse
+            )
+
 
 turnUp : Card -> Card
 turnUp card =
     { card | faceUp = True }
+
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -262,8 +267,8 @@ view model =
             [ viewFoundations model
             , viewTableau model
             , row [ width fill ]
-                [ el [ alignLeft ] <| viewSpare model
-                , el [ alignRight ] <| viewStock model
+                [ el [] <| viewSpare model
+                , el [] <| viewStock model
                 ]
             ]
 
@@ -302,21 +307,18 @@ viewTableauColumn tableau colIndex =
 
 viewColumn : List Card -> Element Msg
 viewColumn cards =
-    let
-        col =
-            case cards of
-                [] ->
-                    el globalCardAtts none
+    el [ alignTop ] <|
+        case cards of
+            [] ->
+                el globalCardAtts none
 
-                first :: rest ->
-                    el
-                        [ inFront <| viewColumn rest
-                        , moveDown <| 24 * scale
-                        ]
-                    <|
-                        viewCard first
-    in
-    column [ alignTop ] [ col ]
+            first :: rest ->
+                el
+                    [ inFront <| viewColumn rest
+                    , moveDown <| 24 * scale
+                    ]
+                <|
+                    viewCard first
 
 
 getTableauColumn : Tableau -> Int -> List Card
@@ -357,21 +359,18 @@ viewStock model =
 
 viewStockRow : List (Element Msg) -> Element Msg
 viewStockRow els =
-    let
-        rowContent =
-            case els of
-                [] ->
-                    none
+    el [] <|
+        case els of
+            [] ->
+                none
 
-                first :: rest ->
-                    el
-                        [ inFront <| viewStockRow rest
-                        , moveRight 15
-                        ]
-                    <|
-                        first
-    in
-    row [] [ rowContent ]
+            first :: rest ->
+                el
+                    [ inFront <| viewStockRow rest
+                    , moveRight 15
+                    ]
+                <|
+                    first
 
 
 viewCard : Card -> Element Msg
