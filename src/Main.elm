@@ -240,6 +240,7 @@ addCardsFromStock board =
                 tableauList
                 stockList
                 |> Dict.fromList
+                |> turnUpEndCards
         , stock = List.drop 1 board.stock
     }
 
