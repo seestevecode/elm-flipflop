@@ -184,8 +184,10 @@ view model =
         , Background.color <| rgb255 157 120 85
         ]
     <|
-        column []
-            [ viewFoundations model ]
+        column [ spacing <| floor (25 * scale) ]
+            [ viewFoundations model
+            , viewSpare model
+            ]
 
 
 viewFoundations : Model -> Element msg
@@ -201,6 +203,23 @@ viewFoundations model =
                         viewCard last
             )
             model.board.foundations
+
+
+viewSpare : Model -> Element msg
+viewSpare model =
+    let
+        viewSingleSpare spare =
+            case spare of
+                Nothing ->
+                    viewCardSpace
+
+                Just s ->
+                    viewCard s
+    in
+    row [ spacing <| floor (10 * scale) ]
+        [ viewSingleSpare <| Tuple.first model.board.spare
+        , viewSingleSpare <| Tuple.second model.board.spare
+        ]
 
 
 viewCard : Card -> Element msg
