@@ -184,9 +184,23 @@ view model =
         , Background.color <| rgb255 157 120 85
         ]
     <|
-        column [ spacing <| floor (10 * scale) ] <|
-            List.map viewCard <|
-                deck model.gameType
+        column []
+            [ viewFoundations model ]
+
+
+viewFoundations : Model -> Element msg
+viewFoundations model =
+    row [ spacing <| floor (10 * scale) ] <|
+        List.indexedMap
+            (\foundationIndex foundationCards ->
+                case List.reverse foundationCards of
+                    [] ->
+                        viewCardSpace
+
+                    last :: _ ->
+                        viewCard last
+            )
+            model.board.foundations
 
 
 viewCard : Card -> Element msg
