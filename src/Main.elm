@@ -251,9 +251,21 @@ update msg model =
         SelectTableau card ->
             ( { model
                 | selection =
-                    case tableauColumn model.board.tableau card of
+                    let
+                        cards =
+                            selectFromCardInTableau card model.board.tableau
+
+                        colIndex =
+                            tableauColumn model.board.tableau card
+                    in
+                    case colIndex of
                         Just col ->
-                            SingleTableau card col
+                            case cards of
+                                [ c ] ->
+                                    SingleTableau c col
+
+                                cs ->
+                                    ManyTableau cs col
 
                         Nothing ->
                             model.selection
@@ -294,6 +306,38 @@ tableauColumn tableau card =
         |> Dict.filter (\_ cs -> List.member card cs)
         |> Dict.keys
         |> List.head
+
+
+selectFromCardInTableau : Card -> Tableau -> List Card
+selectFromCardInTableau card tableau =
+    Dict.foldl
+        (\_ column tail ->
+            case tail of
+                [] ->
+                    selectFromCardInColumn card column
+
+                _ ->
+                    tail
+        )
+        []
+        tableau
+
+
+selectFromCardInColumn : Card -> List Card -> List Card
+selectFromCardInColumn card column =
+    case column of
+        [] ->
+            []
+
+        [ c ] ->
+            if c == card then
+                [ c ]
+
+            else
+                []
+
+        cs ->
+            ListX.dropWhile (\c -> c /= card) cs
 
 
 scale : Float
