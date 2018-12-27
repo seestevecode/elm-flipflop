@@ -229,7 +229,12 @@ update msg model =
             )
 
         AddCardsFromStock ->
-            ( { model | board = addCardsFromStock model.board }, Cmd.none )
+            ( { model
+                | board = addCardsFromStock model.board
+                , selection = NothingSelected
+              }
+            , Cmd.none
+            )
 
         SelectSpare card ->
             ( { model
