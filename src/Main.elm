@@ -393,7 +393,7 @@ viewTableauColumn model colIndex =
 
 viewColumn : Model -> List Card -> Element Msg
 viewColumn model cards =
-    column [ alignTop ] <|
+    column [ alignTop, spacing -(floor <| 81 * scale) ] <|
         case cards of
             [] ->
                 [ el globalCardAtts none ]
