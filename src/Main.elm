@@ -35,7 +35,7 @@ init _ =
     in
     ( { gameType = gameType
       , board = boardFromDeck gameType <| deck gameType
-      , selection = Nothing
+      , selection = NothingSelected
       }
     , Random.generate NewDeck <|
         Random.List.shuffle (deck gameType)
@@ -99,7 +99,7 @@ type alias Tableau =
 
 
 type Selection
-    = Nothing
+    = NothingSelected
     | SingleSpare Card
     | SingleTableau Card Int
     | ManyTableau (List Card) Int
