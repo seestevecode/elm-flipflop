@@ -28,7 +28,7 @@ init _ =
         gameType =
             { name = "4-suit"
             , numFoundations = 4
-            , numSuits = 4
+            , numSuits = 1
             , numTableauCards = 25
             , tableauColSizes = [ 5, 5, 5, 5, 5 ]
             }
@@ -265,12 +265,16 @@ update msg model =
                     in
                     case colIndex of
                         Just col ->
-                            case cards of
-                                [ c ] ->
-                                    SingleTableau c col
+                            if selectionValid cards then
+                                case cards of
+                                    [ c ] ->
+                                        SingleTableau c col
 
-                                cs ->
-                                    ManyTableau cs col
+                                    cs ->
+                                        ManyTableau cs col
+
+                            else
+                                model.selection
 
                         Nothing ->
                             model.selection
@@ -343,6 +347,30 @@ selectFromCardInColumn card column =
 
         cs ->
             ListX.dropWhile (\c -> c /= card) cs
+
+
+selectionValid : List Card -> Bool
+selectionValid cards =
+    (List.length <| groupCardsByLink cards) == 1
+
+
+groupCardsByLink : List Card -> List (List Card)
+groupCardsByLink cards =
+    cards
+        |> ListX.groupWhile cardsLink
+        |> List.map (\( x, xs ) -> x :: xs)
+
+
+cardsLink : Card -> Card -> Bool
+cardsLink x y =
+    let
+        consecutiveRanks =
+            ListX.zip orderedRanks (List.drop 1 orderedRanks)
+    in
+    (List.member ( x.rank, y.rank ) consecutiveRanks
+        || List.member ( y.rank, x.rank ) consecutiveRanks
+    )
+        && (x.suit == y.suit)
 
 
 scale : Float
