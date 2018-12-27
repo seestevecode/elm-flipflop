@@ -27,10 +27,10 @@ init _ =
     let
         gameType =
             { name = "4-suit"
-            , numFoundations = 5
-            , numSuits = 5
-            , numTableauCards = 28
-            , tableauColSizes = [ 6, 6, 6, 5, 5 ]
+            , numFoundations = 4
+            , numSuits = 4
+            , numTableauCards = 25
+            , tableauColSizes = [ 5, 5, 5, 5, 5 ]
             }
     in
     ( { gameType = gameType
@@ -232,7 +232,21 @@ update msg model =
             ( { model | board = addCardsFromStock model.board }, Cmd.none )
 
         SelectSpare card ->
-            ( { model | selection = SingleSpare card }, Cmd.none )
+            ( { model
+                | selection =
+                    case model.selection of
+                        SingleSpare c ->
+                            if c == card then
+                                NothingSelected
+
+                            else
+                                SingleSpare card
+
+                        _ ->
+                            SingleSpare card
+              }
+            , Cmd.none
+            )
 
         SelectTableau card ->
             ( { model
