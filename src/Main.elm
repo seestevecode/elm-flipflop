@@ -108,6 +108,7 @@ type Selection
 type Msg
     = NewDeck (List Card)
     | AddCardsFromStock
+    | SelectSpare Card
 
 
 boardFromDeck : GameType -> List Card -> Board
@@ -227,11 +228,10 @@ update msg model =
             )
 
         AddCardsFromStock ->
-            ( { model
-                | board = addCardsFromStock model.board
-              }
-            , Cmd.none
-            )
+            ( { model | board = addCardsFromStock model.board }, Cmd.none )
+
+        SelectSpare card ->
+            ( { model | selection = SingleSpare card }, Cmd.none )
 
 
 addCardsFromStock : Board -> Board
@@ -274,6 +274,7 @@ view model =
     <|
         column [ spacing <| floor (25 * scale) ]
             [ viewFoundations model
+            , el [ Font.size 10 ] <| text <| Debug.toString model.selection
             , viewTableau model
             , row [ width fill ]
                 [ el [] <| viewSpare model
@@ -292,7 +293,7 @@ viewFoundations model =
                         viewCardSpace
 
                     last :: _ ->
-                        viewCard last
+                        viewCard last []
             )
             model.board.foundations
 
@@ -327,7 +328,7 @@ viewColumn cards =
                     , moveDown <| 24 * scale
                     ]
                 <|
-                    viewCard first
+                    viewCard first []
 
 
 getTableauColumn : Tableau -> Int -> List Card
@@ -347,7 +348,10 @@ viewSpare model =
                     viewCardSpace
 
                 Just s ->
-                    viewCard s
+                    viewCard s [ Events.onClick <| SelectSpare s, pointer ]
+
+        selectAttr =
+            [ Events.onClick SelectSpare, pointer ]
     in
     row [ spacing <| floor (10 * scale) ]
         [ viewSingleSpare <| Tuple.first model.board.spare
@@ -382,20 +386,23 @@ viewStockRow els =
                     first
 
 
-viewCard : Card -> Element Msg
-viewCard card =
+viewCard : Card -> List (Attribute Msg) -> Element Msg
+viewCard card attr =
     case card.faceUp of
         True ->
-            viewCardFaceup card
+            viewCardFaceup card attr
 
         False ->
             viewCardFacedown
 
 
-viewCardFaceup : Card -> Element Msg
-viewCardFaceup card =
+viewCardFaceup : Card -> List (Attribute Msg) -> Element Msg
+viewCardFaceup card attr =
     column
-        (globalCardAtts ++ [ Background.color <| rgb 1 1 1 ])
+        (globalCardAtts
+            ++ attr
+            ++ [ Background.color <| rgb 1 1 1 ]
+        )
         [ viewCardFaceupHead card, viewCardFaceupBody card ]
 
 
