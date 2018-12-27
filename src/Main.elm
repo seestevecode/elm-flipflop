@@ -27,14 +27,15 @@ init _ =
     let
         gameType =
             { name = "4-suit"
-            , numFoundations = 4
-            , numSuits = 4
-            , numTableauCards = 25
-            , tableauColSizes = [ 5, 5, 5, 5, 5 ]
+            , numFoundations = 5
+            , numSuits = 5
+            , numTableauCards = 28
+            , tableauColSizes = [ 6, 6, 6, 5, 5 ]
             }
     in
     ( { gameType = gameType
       , board = boardFromDeck gameType <| deck gameType
+      , selection = Nothing
       }
     , Random.generate NewDeck <|
         Random.List.shuffle (deck gameType)
@@ -44,6 +45,7 @@ init _ =
 type alias Model =
     { gameType : GameType
     , board : Board
+    , selection : Selection
     }
 
 
@@ -94,6 +96,13 @@ type Suit
 
 type alias Tableau =
     Dict Int (List Card)
+
+
+type Selection
+    = Nothing
+    | SingleSpare Card
+    | SingleTableau Card Int
+    | ManyTableau (List Card) Int
 
 
 type Msg
