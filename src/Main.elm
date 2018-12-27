@@ -408,23 +408,6 @@ viewCardFaceup model card attr =
 
 viewCardFaceupHead : Model -> Card -> Element Msg
 viewCardFaceupHead model card =
-    let
-        cardSelected =
-            case model.selection of
-                SingleSpare selCard ->
-                    card == selCard
-
-                _ ->
-                    False
-
-        selectedEl =
-            case cardSelected of
-                True ->
-                    el [ alignRight, Font.color <| rgb 1 1 1 ] <| text "●"
-
-                False ->
-                    none
-    in
     row
         [ padding <| floor (3 * scale)
         , width fill
@@ -444,8 +427,28 @@ viewCardFaceupHead model card =
             text <|
                 Tuple.first <|
                     suitOutput card.suit
-        , selectedEl
+        , if cardSelected model.selection card then
+            el [ alignRight, Font.color <| rgb 1 1 1 ] <| text "●"
+
+          else
+            none
         ]
+
+
+cardSelected : Selection -> Card -> Bool
+cardSelected selection card =
+    case selection of
+        SingleSpare spareCard ->
+            card == spareCard
+
+        SingleTableau tabCard _ ->
+            card == tabCard
+
+        ManyTableau tabCards _ ->
+            List.member card tabCards
+
+        NothingSelected ->
+            False
 
 
 viewCardFaceupBody : Card -> Element Msg
