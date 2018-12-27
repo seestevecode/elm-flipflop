@@ -109,6 +109,7 @@ type Msg
     = NewDeck (List Card)
     | AddCardsFromStock
     | SelectSpare Card
+    | SelectTableau Card
 
 
 boardFromDeck : GameType -> List Card -> Board
@@ -233,6 +234,19 @@ update msg model =
         SelectSpare card ->
             ( { model | selection = SingleSpare card }, Cmd.none )
 
+        SelectTableau card ->
+            ( { model
+                | selection =
+                    case tableauColumn model.board.tableau card of
+                        Just col ->
+                            SingleTableau card col
+
+                        Nothing ->
+                            model.selection
+              }
+            , Cmd.none
+            )
+
 
 addCardsFromStock : Board -> Board
 addCardsFromStock board =
@@ -258,6 +272,14 @@ addCardsFromStock board =
                 |> turnUpEndCards
         , stock = List.drop 1 board.stock
     }
+
+
+tableauColumn : Tableau -> Card -> Maybe Int
+tableauColumn tableau card =
+    tableau
+        |> Dict.filter (\_ cs -> List.member card cs)
+        |> Dict.keys
+        |> List.head
 
 
 scale : Float
@@ -300,11 +322,7 @@ viewFoundations model =
 
 viewTableau : Model -> Element Msg
 viewTableau model =
-    row
-        [ spacing <| floor (10 * scale)
-        , height <| px 600
-        ]
-    <|
+    row [ spacing <| floor (10 * scale) ] <|
         List.map
             (viewTableauColumn model)
             (Dict.keys model.board.tableau)
@@ -317,18 +335,19 @@ viewTableauColumn model colIndex =
 
 viewColumn : Model -> List Card -> Element Msg
 viewColumn model cards =
-    el [ alignTop ] <|
+    column [ alignTop ] <|
         case cards of
             [] ->
-                el globalCardAtts none
+                [ el globalCardAtts none ]
 
-            first :: rest ->
-                el
-                    [ inFront <| viewColumn model rest
-                    , moveDown <| 24 * scale
-                    ]
-                <|
-                    viewCard model first []
+            cs ->
+                let
+                    viewTabCard c =
+                        viewCard model
+                            c
+                            [ pointer, Events.onClick (SelectTableau c) ]
+                in
+                List.map viewTabCard cs
 
 
 getTableauColumn : Tableau -> Int -> List Card
