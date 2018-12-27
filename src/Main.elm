@@ -293,7 +293,7 @@ viewFoundations model =
                         viewCardSpace
 
                     last :: _ ->
-                        viewCard last []
+                        viewCard model last []
             )
             model.board.foundations
 
@@ -306,17 +306,17 @@ viewTableau model =
         ]
     <|
         List.map
-            (viewTableauColumn model.board.tableau)
+            (viewTableauColumn model)
             (Dict.keys model.board.tableau)
 
 
-viewTableauColumn : Tableau -> Int -> Element Msg
-viewTableauColumn tableau colIndex =
-    getTableauColumn tableau colIndex |> viewColumn
+viewTableauColumn : Model -> Int -> Element Msg
+viewTableauColumn model colIndex =
+    getTableauColumn model.board.tableau colIndex |> viewColumn model
 
 
-viewColumn : List Card -> Element Msg
-viewColumn cards =
+viewColumn : Model -> List Card -> Element Msg
+viewColumn model cards =
     el [ alignTop ] <|
         case cards of
             [] ->
@@ -324,11 +324,11 @@ viewColumn cards =
 
             first :: rest ->
                 el
-                    [ inFront <| viewColumn rest
+                    [ inFront <| viewColumn model rest
                     , moveDown <| 24 * scale
                     ]
                 <|
-                    viewCard first []
+                    viewCard model first []
 
 
 getTableauColumn : Tableau -> Int -> List Card
@@ -348,7 +348,7 @@ viewSpare model =
                     viewCardSpace
 
                 Just s ->
-                    viewCard s [ Events.onClick <| SelectSpare s, pointer ]
+                    viewCard model s [ Events.onClick <| SelectSpare s, pointer ]
 
         selectAttr =
             [ Events.onClick SelectSpare, pointer ]
@@ -386,28 +386,45 @@ viewStockRow els =
                     first
 
 
-viewCard : Card -> List (Attribute Msg) -> Element Msg
-viewCard card attr =
+viewCard : Model -> Card -> List (Attribute Msg) -> Element Msg
+viewCard model card attr =
     case card.faceUp of
         True ->
-            viewCardFaceup card attr
+            viewCardFaceup model card attr
 
         False ->
             viewCardFacedown
 
 
-viewCardFaceup : Card -> List (Attribute Msg) -> Element Msg
-viewCardFaceup card attr =
+viewCardFaceup : Model -> Card -> List (Attribute Msg) -> Element Msg
+viewCardFaceup model card attr =
     column
         (globalCardAtts
             ++ attr
             ++ [ Background.color <| rgb 1 1 1 ]
         )
-        [ viewCardFaceupHead card, viewCardFaceupBody card ]
+        [ viewCardFaceupHead model card, viewCardFaceupBody card ]
 
 
-viewCardFaceupHead : Card -> Element Msg
-viewCardFaceupHead card =
+viewCardFaceupHead : Model -> Card -> Element Msg
+viewCardFaceupHead model card =
+    let
+        cardSelected =
+            case model.selection of
+                SingleSpare selCard ->
+                    card == selCard
+
+                _ ->
+                    False
+
+        selectedEl =
+            case cardSelected of
+                True ->
+                    el [ alignRight, Font.color <| rgb 1 1 1 ] <| text "●"
+
+                False ->
+                    none
+    in
     row
         [ padding <| floor (3 * scale)
         , width fill
@@ -427,6 +444,7 @@ viewCardFaceupHead card =
             text <|
                 Tuple.first <|
                     suitOutput card.suit
+        , selectedEl
         ]
 
 
