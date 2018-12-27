@@ -350,17 +350,14 @@ view model =
     layout
         [ padding <| floor (10 * scale)
         , Background.color <| rgb255 157 120 85
+        , inFront <|
+            row
+                [ width fill, alignBottom, padding <| floor (10 * scale) ]
+                [ el [] <| viewSpare model, el [] <| viewStock model ]
         ]
     <|
         column [ spacing <| floor (25 * scale) ]
-            [ viewFoundations model
-            , el [ Font.size 10 ] <| text <| Debug.toString model.selection
-            , viewTableau model
-            , row [ width fill ]
-                [ el [] <| viewSpare model
-                , el [] <| viewStock model
-                ]
-            ]
+            [ viewFoundations model, viewTableau model ]
 
 
 viewFoundations : Model -> Element Msg
