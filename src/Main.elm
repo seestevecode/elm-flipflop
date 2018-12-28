@@ -113,6 +113,7 @@ type Msg
     | SelectTableau Card
     | MoveTableauToTableau (List Card) Int Int
     | MoveSpareToTableau Card Int
+    | MoveSpareToFoundation Card Int
 
 
 boardFromDeck : GameType -> List Card -> Board
@@ -315,6 +316,14 @@ update msg model =
                 False ->
                     ( model, Cmd.none )
 
+        MoveSpareToFoundation card toFnd ->
+            ( { model
+                | board = moveSpareToFoundation model.board card toFnd
+                , selection = NothingSelected
+              }
+            , Cmd.none
+            )
+
 
 validateTableauMove : Board -> List Card -> Int -> Int -> Bool
 validateTableauMove board cards fromCol toCol =
@@ -398,6 +407,33 @@ moveSpareToTableau board card toCol =
             in
             board.spare
                 |> Tuple.mapBoth removeSelectedSpare removeSelectedSpare
+    }
+
+
+moveSpareToFoundation : Board -> Card -> Int -> Board
+moveSpareToFoundation board card toFnd =
+    { board
+        | foundations =
+            board.foundations
+                |> List.indexedMap
+                    (\f cs ->
+                        if f == toFnd then
+                            cs ++ [ card ]
+
+                        else
+                            cs
+                    )
+        , spare =
+            let
+                removeSelectedSpare =
+                    \c ->
+                        if c == Just card then
+                            Nothing
+
+                        else
+                            c
+            in
+            board.spare |> Tuple.mapBoth removeSelectedSpare removeSelectedSpare
     }
 
 
@@ -516,12 +552,27 @@ viewFoundations model =
     row [ spacing <| floor (10 * scale) ] <|
         List.indexedMap
             (\foundationIndex foundationCards ->
+                let
+                    selectAtts =
+                        case model.selection of
+                            SingleSpare spareCard ->
+                                [ pointer
+                                , Events.onClick
+                                    (MoveSpareToFoundation
+                                        spareCard
+                                        foundationIndex
+                                    )
+                                ]
+
+                            _ ->
+                                []
+                in
                 case List.reverse foundationCards of
                     [] ->
-                        viewCardSpace
+                        viewCardSpace selectAtts
 
                     last :: _ ->
-                        viewCard model last []
+                        viewCard model last selectAtts
             )
             model.board.foundations
 
@@ -575,7 +626,7 @@ viewColumn model colIndex cards =
     column ([ alignTop, spacing -(floor <| 81 * scale) ] ++ selAtts) <|
         case cards of
             [] ->
-                [ viewCardSpace ]
+                [ viewCardSpace [] ]
 
             cs ->
                 let
@@ -747,9 +798,15 @@ viewCardFacedown =
             none
 
 
-viewCardSpace : Element Msg
-viewCardSpace =
-    el (globalCardAtts ++ [ Background.color <| rgba 0 0 0 0.25 ]) <| none
+viewCardSpace : List (Attribute Msg) -> Element Msg
+viewCardSpace atts =
+    el
+        (globalCardAtts
+            ++ atts
+            ++ [ Background.color <| rgba 0 0 0 0.25 ]
+        )
+    <|
+        none
 
 
 globalCardAtts : List (Attribute Msg)
