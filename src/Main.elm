@@ -587,7 +587,7 @@ viewSpare model =
         viewSingleSpare spare =
             case spare of
                 Nothing ->
-                    viewCardSpace
+                    el globalCardAtts none
 
                 Just s ->
                     viewCard model s [ Events.onClick <| SelectSpare s, pointer ]
