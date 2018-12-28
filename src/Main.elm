@@ -112,6 +112,7 @@ type Msg
     | SelectSpare Card
     | SelectTableau Card
     | MoveTableauToTableau (List Card) Int Int
+    | MoveSpareToTableau Card Int
 
 
 boardFromDeck : GameType -> List Card -> Board
@@ -301,6 +302,14 @@ update msg model =
                 False ->
                     ( model, Cmd.none )
 
+        MoveSpareToTableau card toCol ->
+            ( { model
+                | board = moveSpareToTableau model.board card toCol
+                , selection = NothingSelected
+              }
+            , Cmd.none
+            )
+
 
 validateTableauMove : Board -> List Card -> Int -> Int -> Bool
 validateTableauMove board cards fromCol toCol =
@@ -342,6 +351,39 @@ moveCardsInTableau board cards fromCol toCol =
                             cs
                     )
                 |> turnUpEndCards
+    }
+
+
+moveSpareToTableau : Board -> Card -> Int -> Board
+moveSpareToTableau board card toCol =
+    { board
+        | tableau =
+            board.tableau
+                |> Dict.map
+                    (\k cs ->
+                        if k == toCol then
+                            cs ++ [ card ]
+
+                        else
+                            cs
+                    )
+        , spare =
+            board.spare
+                |> Tuple.mapBoth
+                    (\c ->
+                        if c == Just card then
+                            Nothing
+
+                        else
+                            c
+                    )
+                    (\c ->
+                        if c == Just card then
+                            Nothing
+
+                        else
+                            c
+                    )
     }
 
 
@@ -494,7 +536,8 @@ viewColumn model colIndex cards =
                         Events.onClick ClearSelection
 
                       else
-                        Events.onClick (MoveTableauToTableau [ tabCard ] tabCol colIndex)
+                        Events.onClick
+                            (MoveTableauToTableau [ tabCard ] tabCol colIndex)
                     ]
 
                 ManyTableau tabCards tabCol ->
@@ -503,7 +546,13 @@ viewColumn model colIndex cards =
                         Events.onClick ClearSelection
 
                       else
-                        Events.onClick (MoveTableauToTableau tabCards tabCol colIndex)
+                        Events.onClick
+                            (MoveTableauToTableau tabCards tabCol colIndex)
+                    ]
+
+                SingleSpare spareCard ->
+                    [ pointer
+                    , Events.onClick (MoveSpareToTableau spareCard colIndex)
                     ]
 
                 _ ->
