@@ -575,7 +575,7 @@ viewColumn model colIndex cards =
     column ([ alignTop, spacing -(floor <| 81 * scale) ] ++ selAtts) <|
         case cards of
             [] ->
-                [ el globalCardAtts none ]
+                [ viewCardSpace ]
 
             cs ->
                 let
