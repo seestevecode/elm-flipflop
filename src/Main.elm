@@ -368,22 +368,17 @@ moveSpareToTableau board card toCol =
                             cs
                     )
         , spare =
+            let
+                removeSelectedSpare =
+                    \c ->
+                        if c == Just card then
+                            Nothing
+
+                        else
+                            c
+            in
             board.spare
-                |> Tuple.mapBoth
-                    (\c ->
-                        if c == Just card then
-                            Nothing
-
-                        else
-                            c
-                    )
-                    (\c ->
-                        if c == Just card then
-                            Nothing
-
-                        else
-                            c
-                    )
+                |> Tuple.mapBoth removeSelectedSpare removeSelectedSpare
     }
 
 
