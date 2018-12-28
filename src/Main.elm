@@ -288,12 +288,38 @@ update msg model =
             )
 
         MoveTableauToTableau cards fromCol toCol ->
-            ( { model
-                | board = moveCardsInTableau model.board cards fromCol toCol
-                , selection = NothingSelected
-              }
-            , Cmd.none
-            )
+            case validateTableauMove model.board cards fromCol toCol of
+                True ->
+                    ( { model
+                        | board =
+                            moveCardsInTableau model.board cards fromCol toCol
+                        , selection = NothingSelected
+                      }
+                    , Cmd.none
+                    )
+
+                False ->
+                    ( model, Cmd.none )
+
+
+validateTableauMove : Board -> List Card -> Int -> Int -> Bool
+validateTableauMove board cards fromCol toCol =
+    let
+        source =
+            List.head cards
+
+        destination =
+            ListX.last <| getTableauColumn board.tableau toCol
+    in
+    case ( source, destination ) of
+        ( Just s, Just d ) ->
+            cardsLink s d
+
+        ( Just s, Nothing ) ->
+            True
+
+        ( Nothing, _ ) ->
+            False
 
 
 moveCardsInTableau : Board -> List Card -> Int -> Int -> Board
