@@ -355,7 +355,7 @@ validateTableauToTableau board cards fromCol toCol =
     in
     case ( source, destination ) of
         ( Just s, Just d ) ->
-            cardsLink s d
+            cardsLinkXYX s d
 
         ( Just s, Nothing ) ->
             True
@@ -395,7 +395,7 @@ validateSpareToTableau board card toCol =
     in
     case destination of
         Just d ->
-            cardsLink card d
+            cardsLinkXYX card d
 
         Nothing ->
             True
@@ -440,7 +440,7 @@ validateSpareToFoundation board card toFnd =
     in
     case destination of
         Just c ->
-            cardsLink card c
+            cardsLinkXY c card
 
         Nothing ->
             card.rank == Ace
@@ -484,7 +484,7 @@ validateTableauToFoundation board card fromTab toFnd =
     in
     case destination of
         Just c ->
-            cardsLink card c
+            cardsLinkXY c card
 
         Nothing ->
             card.rank == Ace
@@ -591,20 +591,27 @@ selectionValid cards =
 groupCardsByLink : List Card -> List (List Card)
 groupCardsByLink cards =
     cards
-        |> ListX.groupWhile cardsLink
+        |> ListX.groupWhile cardsLinkXYX
         |> List.map (\( x, xs ) -> x :: xs)
 
 
-cardsLink : Card -> Card -> Bool
-cardsLink x y =
-    let
-        consecutiveRanks =
-            ListX.zip orderedRanks (List.drop 1 orderedRanks)
-    in
+cardsLinkXYX : Card -> Card -> Bool
+cardsLinkXYX x y =
     (List.member ( x.rank, y.rank ) consecutiveRanks
         || List.member ( y.rank, x.rank ) consecutiveRanks
     )
         && (x.suit == y.suit)
+
+
+cardsLinkXY : Card -> Card -> Bool
+cardsLinkXY x y =
+    List.member ( x.rank, y.rank ) consecutiveRanks
+        && (x.suit == y.suit)
+
+
+consecutiveRanks : List ( Rank, Rank )
+consecutiveRanks =
+    ListX.zip orderedRanks (List.drop 1 orderedRanks)
 
 
 scale : Float
