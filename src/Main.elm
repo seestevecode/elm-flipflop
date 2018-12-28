@@ -108,8 +108,10 @@ type Selection
 type Msg
     = NewDeck (List Card)
     | AddCardsFromStock
+    | ClearSelection
     | SelectSpare Card
     | SelectTableau Card
+    | MoveTableauToTableau (List Card) Int Int
 
 
 boardFromDeck : GameType -> List Card -> Board
@@ -236,6 +238,9 @@ update msg model =
             , Cmd.none
             )
 
+        ClearSelection ->
+            ( { model | selection = NothingSelected }, Cmd.none )
+
         SelectSpare card ->
             ( { model
                 | selection =
@@ -281,6 +286,37 @@ update msg model =
               }
             , Cmd.none
             )
+
+        MoveTableauToTableau cards fromCol toCol ->
+            ( { model
+                | board = moveCardsInTableau model.board cards fromCol toCol
+                , selection = NothingSelected
+              }
+            , Cmd.none
+            )
+
+
+moveCardsInTableau : Board -> List Card -> Int -> Int -> Board
+moveCardsInTableau board cards fromCol toCol =
+    { board
+        | tableau =
+            board.tableau
+                |> Dict.map
+                    (\k cs ->
+                        if k == fromCol then
+                            cs
+                                |> List.reverse
+                                |> List.drop (List.length cards)
+                                |> List.reverse
+
+                        else if k == toCol then
+                            cs ++ cards
+
+                        else
+                            cs
+                    )
+                |> turnUpEndCards
+    }
 
 
 addCardsFromStock : Board -> Board
@@ -418,12 +454,36 @@ viewTableau model =
 
 viewTableauColumn : Model -> Int -> Element Msg
 viewTableauColumn model colIndex =
-    getTableauColumn model.board.tableau colIndex |> viewColumn model
+    getTableauColumn model.board.tableau colIndex |> viewColumn model colIndex
 
 
-viewColumn : Model -> List Card -> Element Msg
-viewColumn model cards =
-    column [ alignTop, spacing -(floor <| 81 * scale) ] <|
+viewColumn : Model -> Int -> List Card -> Element Msg
+viewColumn model colIndex cards =
+    let
+        selAtts =
+            case model.selection of
+                SingleTableau tabCard tabCol ->
+                    [ pointer
+                    , if colIndex == tabCol then
+                        Events.onClick ClearSelection
+
+                      else
+                        Events.onClick (MoveTableauToTableau [ tabCard ] tabCol colIndex)
+                    ]
+
+                ManyTableau tabCards tabCol ->
+                    [ pointer
+                    , if colIndex == tabCol then
+                        Events.onClick ClearSelection
+
+                      else
+                        Events.onClick (MoveTableauToTableau tabCards tabCol colIndex)
+                    ]
+
+                _ ->
+                    []
+    in
+    column ([ alignTop, spacing -(floor <| 81 * scale) ] ++ selAtts) <|
         case cards of
             [] ->
                 [ el globalCardAtts none ]
