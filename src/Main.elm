@@ -303,12 +303,17 @@ update msg model =
                     ( model, Cmd.none )
 
         MoveSpareToTableau card toCol ->
-            ( { model
-                | board = moveSpareToTableau model.board card toCol
-                , selection = NothingSelected
-              }
-            , Cmd.none
-            )
+            case validateSpareMove model.board card toCol of
+                True ->
+                    ( { model
+                        | board = moveSpareToTableau model.board card toCol
+                        , selection = NothingSelected
+                      }
+                    , Cmd.none
+                    )
+
+                False ->
+                    ( model, Cmd.none )
 
 
 validateTableauMove : Board -> List Card -> Int -> Int -> Bool
@@ -352,6 +357,20 @@ moveCardsInTableau board cards fromCol toCol =
                     )
                 |> turnUpEndCards
     }
+
+
+validateSpareMove : Board -> Card -> Int -> Bool
+validateSpareMove board card toCol =
+    let
+        destination =
+            ListX.last <| getTableauColumn board.tableau toCol
+    in
+    case destination of
+        Just d ->
+            cardsLink card d
+
+        Nothing ->
+            True
 
 
 moveSpareToTableau : Board -> Card -> Int -> Board
