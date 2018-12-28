@@ -27,10 +27,10 @@ init _ =
     let
         gameType =
             { name = "4-suit"
-            , numFoundations = 4
-            , numSuits = 4
-            , numTableauCards = 25
-            , tableauColSizes = [ 5, 5, 5, 5, 5 ]
+            , numFoundations = 5
+            , numSuits = 1
+            , numTableauCards = 28
+            , tableauColSizes = [ 6, 6, 6, 5, 5 ]
             }
     in
     ( { gameType = gameType
@@ -201,7 +201,7 @@ orderedRanks =
 
 orderedSuits : List Suit
 orderedSuits =
-    [ Spades, Hearts, Clubs, Diamonds, Stars ]
+    [ Spades, Hearts, Diamonds, Clubs, Stars ]
 
 
 turnUpEndCards : Tableau -> Tableau
@@ -972,13 +972,13 @@ suitOutput suit =
             ( "♥", rgb255 218 87 53 )
 
         Clubs ->
-            ( "♣", rgb255 54 55 36 )
+            ( "♣", rgb255 114 147 181 )
 
         Diamonds ->
             ( "♦", rgb255 242 168 31 )
 
         Spades ->
-            ( "♠", rgb255 114 147 181 )
+            ( "♠", rgb255 54 55 36 )
 
         Stars ->
             ( "★", rgb255 109 167 128 )
