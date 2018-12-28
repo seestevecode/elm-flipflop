@@ -317,12 +317,17 @@ update msg model =
                     ( model, Cmd.none )
 
         MoveSpareToFoundation card toFnd ->
-            ( { model
-                | board = moveSpareToFoundation model.board card toFnd
-                , selection = NothingSelected
-              }
-            , Cmd.none
-            )
+            case validateSpareToFoundation model.board card toFnd of
+                True ->
+                    ( { model
+                        | board = moveSpareToFoundation model.board card toFnd
+                        , selection = NothingSelected
+                      }
+                    , Cmd.none
+                    )
+
+                False ->
+                    ( model, Cmd.none )
 
 
 validateTableauToTableau : Board -> List Card -> Int -> Int -> Bool
@@ -408,6 +413,23 @@ moveSpareToTableau board card toCol =
             board.spare
                 |> Tuple.mapBoth removeSelectedSpare removeSelectedSpare
     }
+
+
+validateSpareToFoundation : Board -> Card -> Int -> Bool
+validateSpareToFoundation board card toFnd =
+    let
+        destination =
+            board.foundations
+                |> ListX.getAt toFnd
+                |> Maybe.withDefault []
+                |> ListX.last
+    in
+    case destination of
+        Just c ->
+            cardsLink card c
+
+        Nothing ->
+            card.rank == Ace
 
 
 moveSpareToFoundation : Board -> Card -> Int -> Board
