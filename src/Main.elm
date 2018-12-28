@@ -114,6 +114,7 @@ type Msg
     | MoveTableauToTableau (List Card) Int Int
     | MoveSpareToTableau Card Int
     | MoveSpareToFoundation Card Int
+    | MoveTableauToFoundation Card Int Int
 
 
 boardFromDeck : GameType -> List Card -> Board
@@ -329,6 +330,14 @@ update msg model =
                 False ->
                     ( model, Cmd.none )
 
+        MoveTableauToFoundation card fromTab toFnd ->
+            ( { model
+                | board = moveTableauToFoundation model.board card fromTab toFnd
+                , selection = NothingSelected
+              }
+            , Cmd.none
+            )
+
 
 validateTableauToTableau : Board -> List Card -> Int -> Int -> Bool
 validateTableauToTableau board cards fromCol toCol =
@@ -459,6 +468,33 @@ moveSpareToFoundation board card toFnd =
     }
 
 
+moveTableauToFoundation : Board -> Card -> Int -> Int -> Board
+moveTableauToFoundation board card fromTab toFnd =
+    { board
+        | tableau =
+            board.tableau
+                |> Dict.map
+                    (\k cs ->
+                        if k == fromTab then
+                            cs |> List.reverse |> List.drop 1 |> List.reverse
+
+                        else
+                            cs
+                    )
+                |> turnUpEndCards
+        , foundations =
+            board.foundations
+                |> List.indexedMap
+                    (\foundationIndex cs ->
+                        if foundationIndex == toFnd then
+                            cs ++ [ card ]
+
+                        else
+                            cs
+                    )
+    }
+
+
 addCardsFromStock : Board -> Board
 addCardsFromStock board =
     { board
@@ -582,6 +618,16 @@ viewFoundations model =
                                 , Events.onClick
                                     (MoveSpareToFoundation
                                         spareCard
+                                        foundationIndex
+                                    )
+                                ]
+
+                            SingleTableau tabCard tabCol ->
+                                [ pointer
+                                , Events.onClick
+                                    (MoveTableauToFoundation
+                                        tabCard
+                                        tabCol
                                         foundationIndex
                                     )
                                 ]
