@@ -28,7 +28,7 @@ init _ =
         gameType =
             { name = "4-suit"
             , numFoundations = 4
-            , numSuits = 1
+            , numSuits = 4
             , numTableauCards = 25
             , tableauColSizes = [ 5, 5, 5, 5, 5 ]
             }
@@ -355,7 +355,7 @@ validateTableauToTableau board cards fromCol toCol =
     in
     case ( source, destination ) of
         ( Just s, Just d ) ->
-            cardsLinkXYX s d
+            cardsLinkTableauBuild s d
 
         ( Just s, Nothing ) ->
             True
@@ -395,7 +395,7 @@ validateSpareToTableau board card toCol =
     in
     case destination of
         Just d ->
-            cardsLinkXYX card d
+            cardsLinkTableauBuild card d
 
         Nothing ->
             True
@@ -440,7 +440,7 @@ validateSpareToFoundation board card toFnd =
     in
     case destination of
         Just c ->
-            cardsLinkXY c card
+            cardsLinkFoundationBuild c card
 
         Nothing ->
             card.rank == Ace
@@ -484,7 +484,7 @@ validateTableauToFoundation board card fromTab toFnd =
     in
     case destination of
         Just c ->
-            cardsLinkXY c card
+            cardsLinkFoundationBuild c card
 
         Nothing ->
             card.rank == Ace
@@ -591,20 +591,26 @@ selectionValid cards =
 groupCardsByLink : List Card -> List (List Card)
 groupCardsByLink cards =
     cards
-        |> ListX.groupWhile cardsLinkXYX
+        |> ListX.groupWhile cardsLinkTableauMove
         |> List.map (\( x, xs ) -> x :: xs)
 
 
-cardsLinkXYX : Card -> Card -> Bool
-cardsLinkXYX x y =
+cardsLinkTableauMove : Card -> Card -> Bool
+cardsLinkTableauMove x y =
     (List.member ( x.rank, y.rank ) consecutiveRanks
         || List.member ( y.rank, x.rank ) consecutiveRanks
     )
         && (x.suit == y.suit)
 
 
-cardsLinkXY : Card -> Card -> Bool
-cardsLinkXY x y =
+cardsLinkTableauBuild : Card -> Card -> Bool
+cardsLinkTableauBuild x y =
+    List.member ( x.rank, y.rank ) consecutiveRanks
+        || List.member ( y.rank, x.rank ) consecutiveRanks
+
+
+cardsLinkFoundationBuild : Card -> Card -> Bool
+cardsLinkFoundationBuild x y =
     List.member ( x.rank, y.rank ) consecutiveRanks
         && (x.suit == y.suit)
 
