@@ -290,11 +290,11 @@ update msg model =
             )
 
         MoveTableauToTableau cards fromCol toCol ->
-            case validateTableauMove model.board cards fromCol toCol of
+            case validateTableauToTableau model.board cards fromCol toCol of
                 True ->
                     ( { model
                         | board =
-                            moveCardsInTableau model.board cards fromCol toCol
+                            moveTableauToTableau model.board cards fromCol toCol
                         , selection = NothingSelected
                       }
                     , Cmd.none
@@ -304,7 +304,7 @@ update msg model =
                     ( model, Cmd.none )
 
         MoveSpareToTableau card toCol ->
-            case validateSpareMove model.board card toCol of
+            case validateSpareToTableau model.board card toCol of
                 True ->
                     ( { model
                         | board = moveSpareToTableau model.board card toCol
@@ -325,8 +325,8 @@ update msg model =
             )
 
 
-validateTableauMove : Board -> List Card -> Int -> Int -> Bool
-validateTableauMove board cards fromCol toCol =
+validateTableauToTableau : Board -> List Card -> Int -> Int -> Bool
+validateTableauToTableau board cards fromCol toCol =
     let
         source =
             List.head cards
@@ -345,8 +345,8 @@ validateTableauMove board cards fromCol toCol =
             False
 
 
-moveCardsInTableau : Board -> List Card -> Int -> Int -> Board
-moveCardsInTableau board cards fromCol toCol =
+moveTableauToTableau : Board -> List Card -> Int -> Int -> Board
+moveTableauToTableau board cards fromCol toCol =
     { board
         | tableau =
             board.tableau
@@ -368,8 +368,8 @@ moveCardsInTableau board cards fromCol toCol =
     }
 
 
-validateSpareMove : Board -> Card -> Int -> Bool
-validateSpareMove board card toCol =
+validateSpareToTableau : Board -> Card -> Int -> Bool
+validateSpareToTableau board card toCol =
     let
         destination =
             ListX.last <| getTableauColumn board.tableau toCol
