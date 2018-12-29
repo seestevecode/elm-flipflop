@@ -7,6 +7,7 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Events as Events
 import Element.Font as Font
+import Element.Input as Input
 import Html exposing (Html)
 import List.Extra as ListX
 import Random
@@ -26,16 +27,17 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     let
         gameType =
-            { name = "4-suit"
-            , numFoundations = 5
+            { name = "1-suit"
+            , numFoundations = 4
             , numSuits = 1
-            , numTableauCards = 28
-            , tableauColSizes = [ 6, 6, 6, 5, 5 ]
+            , numTableauCards = 25
+            , tableauColSizes = [ 5, 5, 5, 5, 5 ]
             }
     in
     ( { gameType = gameType
       , board = boardFromDeck gameType <| deck gameType
       , selection = NothingSelected
+      , moves = 0
       }
     , Random.generate NewDeck <|
         Random.List.shuffle (deck gameType)
@@ -46,6 +48,7 @@ type alias Model =
     { gameType : GameType
     , board : Board
     , selection : Selection
+    , moves : Int
     }
 
 
@@ -237,6 +240,7 @@ update msg model =
             ( { model
                 | board = addCardsFromStock model.board
                 , selection = NothingSelected
+                , moves = model.moves + 1
               }
             , Cmd.none
             )
@@ -297,6 +301,7 @@ update msg model =
                         | board =
                             moveTableauToTableau model.board cards fromCol toCol
                         , selection = NothingSelected
+                        , moves = model.moves + 1
                       }
                     , Cmd.none
                     )
@@ -310,6 +315,7 @@ update msg model =
                     ( { model
                         | board = moveSpareToTableau model.board card toCol
                         , selection = NothingSelected
+                        , moves = model.moves + 1
                       }
                     , Cmd.none
                     )
@@ -323,6 +329,7 @@ update msg model =
                     ( { model
                         | board = moveSpareToFoundation model.board card toFnd
                         , selection = NothingSelected
+                        , moves = model.moves + 1
                       }
                     , Cmd.none
                     )
@@ -336,6 +343,7 @@ update msg model =
                     ( { model
                         | board = moveTableauToFoundation model.board card fromTab toFnd
                         , selection = NothingSelected
+                        , moves = model.moves + 1
                       }
                     , Cmd.none
                     )
@@ -630,14 +638,26 @@ view model =
     layout
         [ padding <| floor (10 * scale)
         , Background.color <| rgb255 157 120 85
-        , inFront <|
-            row
-                [ width fill, alignBottom, padding <| floor (10 * scale) ]
-                [ el [] <| viewSpare model, el [] <| viewStock model ]
         ]
     <|
-        column [ spacing <| floor (25 * scale) ]
-            [ viewFoundations model, viewTableau model ]
+        row [ spacing <| floor (25 * scale), height fill ]
+            [ column [ spacing <| floor (25 * scale), alignTop ]
+                [ viewFoundations model
+                , viewTableau model
+                ]
+            , column
+                [ spacing <| floor (25 * scale)
+                , alignTop
+                , width fill
+                , height fill
+                , padding <| floor (10 * scale)
+                , Background.color <| rgba 0 0 0 0.25
+                ]
+                [ viewInfo model
+                , viewSpare model
+                , viewStock model
+                ]
+            ]
 
 
 viewFoundations : Model -> Element Msg
@@ -678,6 +698,52 @@ viewFoundations model =
                         viewCard model last selectAtts
             )
             model.board.foundations
+
+
+viewInfo : Model -> Element Msg
+viewInfo model =
+    let
+        numFoundationCards =
+            model.board.foundations |> List.concat |> List.length |> toFloat
+
+        numTargetCards =
+            model.gameType.numFoundations * 13 |> toFloat
+    in
+    column
+        [ Font.size <| floor (15 * scale)
+        , spacing <| floor (10 * scale)
+        , Font.color <| rgb 1 1 1
+        , centerX
+        ]
+        [ el [ centerX, Font.size <| floor (22 * scale), Font.bold ] <|
+            text "FlipFlop"
+        , el [ centerX, Font.size <| floor (18 * scale), Font.bold ] <|
+            text <|
+                model.gameType.name
+        , viewProgress <| numFoundationCards / numTargetCards
+        , el [ centerX ] <|
+            text <|
+                case model.moves of
+                    1 ->
+                        "1 move"
+
+                    n ->
+                        String.fromInt n ++ " moves"
+        ]
+
+
+viewProgress : Float -> Element Msg
+viewProgress progress =
+    let
+        intProgress =
+            round (progress * 100)
+    in
+    el [ centerX ] <| text <| "Completed: " ++ String.fromInt intProgress ++ "%"
+
+
+viewUndoButton : Element Msg
+viewUndoButton =
+    Input.button [] { onPress = Just ClearSelection, label = text "Clear" }
 
 
 viewTableau : Model -> Element Msg
@@ -915,9 +981,19 @@ viewCardSpace atts =
 globalCardAtts : List (Attribute Msg)
 globalCardAtts =
     [ Border.rounded <| floor (4 * scale)
-    , width <| px <| floor (68 * scale)
-    , height <| px <| floor (105 * scale)
+    , width (cardWidth 1)
+    , height (cardHeight 1)
     ]
+
+
+cardWidth : Int -> Length
+cardWidth cards =
+    px <| floor (68 * scale * toFloat cards)
+
+
+cardHeight : Int -> Length
+cardHeight cards =
+    px <| floor (105 * scale * toFloat cards)
 
 
 viewRank : Rank -> Element Msg
