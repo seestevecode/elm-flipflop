@@ -123,6 +123,7 @@ type Msg
     | MoveSpareToFoundation Card Int
     | MoveTableauToFoundation Card Int Int
     | Undo
+    | Restart
 
 
 boardFromDeck : GameType -> List Card -> Board
@@ -371,6 +372,21 @@ update msg model =
                         | board = last
                         , selection = NothingSelected
                         , undoHistory = rest
+                        , undoUsed = True
+                      }
+                    , Cmd.none
+                    )
+
+        Restart ->
+            case List.reverse model.undoHistory of
+                [] ->
+                    ( model, Cmd.none )
+
+                first :: _ ->
+                    ( { model
+                        | board = first
+                        , selection = NothingSelected
+                        , undoHistory = []
                         , undoUsed = True
                       }
                     , Cmd.none
@@ -677,12 +693,15 @@ view model =
                 , height fill
                 , padding <| floor (10 * scale)
                 , Background.color <| rgba 0 0 0 0.25
+                , Font.size <| floor (15 * scale)
+                , Font.color <| rgb 1 1 1
                 ]
                 [ viewInfo model
                 , viewSpare model
                 , viewStock model
                 , if List.length model.undoHistory >= 1 then
-                    viewUndoButton
+                    row [ alignBottom, width fill ]
+                        [ viewUndoButton, viewRestartButton ]
 
                   else
                     none
@@ -773,13 +792,14 @@ viewProgress progress =
 
 viewUndoButton : Element Msg
 viewUndoButton =
-    Input.button
-        [ centerX
-        , alignBottom
-        , Font.size <| floor (15 * scale)
-        , Font.color <| rgb 1 1 1
-        ]
+    Input.button [ alignLeft ]
         { onPress = Just Undo, label = text "Undo" }
+
+
+viewRestartButton : Element Msg
+viewRestartButton =
+    Input.button [ alignRight ]
+        { onPress = Just Restart, label = text "Restart" }
 
 
 viewTableau : Model -> Element Msg
