@@ -787,7 +787,7 @@ viewProgress progress =
         intProgress =
             round (progress * 100)
     in
-    el [ centerX ] <| text <| "Completed: " ++ String.fromInt intProgress ++ "%"
+    el [ centerX ] <| text <| String.fromInt intProgress ++ "% completed"
 
 
 viewUndoButton : Element Msg
