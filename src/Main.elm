@@ -38,6 +38,8 @@ init _ =
       , board = boardFromDeck gameType <| deck gameType
       , selection = NothingSelected
       , moves = 0
+      , undoHistory = []
+      , undoUsed = False
       }
     , Random.generate NewDeck <|
         Random.List.shuffle (deck gameType)
@@ -49,6 +51,8 @@ type alias Model =
     , board : Board
     , selection : Selection
     , moves : Int
+    , undoHistory : List Board
+    , undoUsed : Bool
     }
 
 
@@ -118,6 +122,7 @@ type Msg
     | MoveSpareToTableau Card Int
     | MoveSpareToFoundation Card Int
     | MoveTableauToFoundation Card Int Int
+    | Undo
 
 
 boardFromDeck : GameType -> List Card -> Board
@@ -241,6 +246,7 @@ update msg model =
                 | board = addCardsFromStock model.board
                 , selection = NothingSelected
                 , moves = model.moves + 1
+                , undoHistory = model.board :: model.undoHistory
               }
             , Cmd.none
             )
@@ -302,6 +308,7 @@ update msg model =
                             moveTableauToTableau model.board cards fromCol toCol
                         , selection = NothingSelected
                         , moves = model.moves + 1
+                        , undoHistory = model.board :: model.undoHistory
                       }
                     , Cmd.none
                     )
@@ -316,6 +323,7 @@ update msg model =
                         | board = moveSpareToTableau model.board card toCol
                         , selection = NothingSelected
                         , moves = model.moves + 1
+                        , undoHistory = model.board :: model.undoHistory
                       }
                     , Cmd.none
                     )
@@ -330,6 +338,7 @@ update msg model =
                         | board = moveSpareToFoundation model.board card toFnd
                         , selection = NothingSelected
                         , moves = model.moves + 1
+                        , undoHistory = model.board :: model.undoHistory
                       }
                     , Cmd.none
                     )
@@ -344,12 +353,28 @@ update msg model =
                         | board = moveTableauToFoundation model.board card fromTab toFnd
                         , selection = NothingSelected
                         , moves = model.moves + 1
+                        , undoHistory = model.board :: model.undoHistory
                       }
                     , Cmd.none
                     )
 
                 False ->
                     ( model, Cmd.none )
+
+        Undo ->
+            case model.undoHistory of
+                [] ->
+                    ( model, Cmd.none )
+
+                last :: rest ->
+                    ( { model
+                        | board = last
+                        , selection = NothingSelected
+                        , undoHistory = rest
+                        , undoUsed = True
+                      }
+                    , Cmd.none
+                    )
 
 
 validateTableauToTableau : Board -> List Card -> Int -> Int -> Bool
@@ -656,6 +681,11 @@ view model =
                 [ viewInfo model
                 , viewSpare model
                 , viewStock model
+                , if List.length model.undoHistory >= 1 then
+                    viewUndoButton
+
+                  else
+                    none
                 ]
             ]
 
@@ -743,7 +773,13 @@ viewProgress progress =
 
 viewUndoButton : Element Msg
 viewUndoButton =
-    Input.button [] { onPress = Just ClearSelection, label = text "Clear" }
+    Input.button
+        [ centerX
+        , alignBottom
+        , Font.size <| floor (15 * scale)
+        , Font.color <| rgb 1 1 1
+        ]
+        { onPress = Just Undo, label = text "Undo" }
 
 
 viewTableau : Model -> Element Msg
