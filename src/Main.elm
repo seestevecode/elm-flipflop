@@ -695,16 +695,25 @@ view model =
                 , Background.color <| rgba 0 0 0 0.25
                 , Font.size <| floor (15 * scale)
                 , Font.color <| rgb 1 1 1
+                , inFront <|
+                    if List.length model.undoHistory >= 1 then
+                        row
+                            [ alignBottom
+                            , width fill
+                            , padding <| floor (10 * scale)
+                            ]
+                            [ viewUndoButton, viewRestartButton ]
+
+                    else
+                        none
                 ]
                 [ viewInfo model
-                , viewSpare model
-                , viewStock model
-                , if List.length model.undoHistory >= 1 then
-                    row [ alignBottom, width fill ]
-                        [ viewUndoButton, viewRestartButton ]
-
-                  else
-                    none
+                , el [ centerX ] <| text "☰"
+                , column [ spacing <| floor (20 * scale) ]
+                    [ viewSpare model, viewStock model ]
+                , el [] <|
+                    paragraph [ alignTop ]
+                        [ text "Some stuff goes in here." ]
                 ]
             ]
 
@@ -778,6 +787,12 @@ viewInfo model =
 
                     n ->
                         String.fromInt n ++ " moves"
+        , el [ centerX, height (fill |> minimum 20) ] <|
+            if model.undoUsed then
+                text "Undo used"
+
+            else
+                none
         ]
 
 
