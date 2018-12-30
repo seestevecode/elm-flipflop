@@ -27,16 +27,16 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     let
         gameType =
-            { name = "1-suit"
+            { name = "2-suit"
             , numFoundations = 4
-            , numSuits = 1
+            , numSuits = 2
             , numTableauCards = 25
             , tableauColSizes = [ 5, 5, 5, 5, 5 ]
             }
     in
     ( { gameType = gameType
       , board = boardFromDeck gameType <| deck gameType
-      , selection = NothingSelected
+      , selection = NoSelection
       , moves = 0
       , undoHistory = []
       , undoUsed = False
@@ -117,10 +117,9 @@ type alias Tableau =
 
 
 type Selection
-    = NothingSelected
-    | SingleSpare Card
-    | SingleTableau Card Int
-    | ManyTableau (List Card) Int
+    = NoSelection
+    | Spare Card
+    | Tableau (List Card) Int
 
 
 type Msg
@@ -256,7 +255,7 @@ update msg model =
         AddCardsFromStock ->
             ( { model
                 | board = addCardsFromStock model.board
-                , selection = NothingSelected
+                , selection = NoSelection
                 , moves = model.moves + 1
                 , undoHistory = model.board :: model.undoHistory
               }
@@ -264,21 +263,21 @@ update msg model =
             )
 
         ClearSelection ->
-            ( { model | selection = NothingSelected }, Cmd.none )
+            ( { model | selection = NoSelection }, Cmd.none )
 
         SelectSpare card ->
             ( { model
                 | selection =
                     case model.selection of
-                        SingleSpare c ->
+                        Spare c ->
                             if c == card then
-                                NothingSelected
+                                NoSelection
 
                             else
-                                SingleSpare card
+                                Spare card
 
                         _ ->
-                            SingleSpare card
+                            Spare card
               }
             , Cmd.none
             )
@@ -299,12 +298,7 @@ update msg model =
                                 selectionValidTableauMove cards
                                     || selectionValidFoundationMove cards
                             then
-                                case cards of
-                                    [ c ] ->
-                                        SingleTableau c col
-
-                                    cs ->
-                                        ManyTableau cs col
+                                        Tableau cards col
 
                             else
                                 model.selection
@@ -321,7 +315,7 @@ update msg model =
                     ( { model
                         | board =
                             moveTableauToTableau model.board cards fromCol toCol
-                        , selection = NothingSelected
+                        , selection = NoSelection
                         , moves = model.moves + 1
                         , undoHistory = model.board :: model.undoHistory
                       }
@@ -336,7 +330,7 @@ update msg model =
                                 (List.reverse cards)
                                 fromCol
                                 toCol
-                        , selection = NothingSelected
+                        , selection = NoSelection
                         , moves = model.moves + List.length cards
                         , undoHistory = model.board :: model.undoHistory
                       }
@@ -351,7 +345,7 @@ update msg model =
                 True ->
                     ( { model
                         | board = moveSpareToTableau model.board card toCol
-                        , selection = NothingSelected
+                        , selection = NoSelection
                         , moves = model.moves + 1
                         , undoHistory = model.board :: model.undoHistory
                       }
@@ -366,7 +360,7 @@ update msg model =
                 True ->
                     ( { model
                         | board = moveSpareToFoundation model.board card toFnd
-                        , selection = NothingSelected
+                        , selection = NoSelection
                         , moves = model.moves + 1
                         , undoHistory = model.board :: model.undoHistory
                       }
@@ -386,7 +380,7 @@ update msg model =
                                 cards
                                 fromTab
                                 toFnd
-                        , selection = NothingSelected
+                        , selection = NoSelection
                         , moves = model.moves + List.length cards
                         , undoHistory = model.board :: model.undoHistory
                       }
@@ -404,7 +398,7 @@ update msg model =
                 last :: rest ->
                     ( { model
                         | board = last
-                        , selection = NothingSelected
+                        , selection = NoSelection
                         , undoHistory = rest
                         , undoUsed = True
                       }
@@ -419,7 +413,7 @@ update msg model =
                 first :: _ ->
                     ( { model
                         | board = first
-                        , selection = NothingSelected
+                        , selection = NoSelection
                         , undoHistory = []
                         , undoUsed = True
                       }
@@ -799,7 +793,7 @@ viewFoundations model =
                 let
                     selectAtts =
                         case model.selection of
-                            SingleSpare spareCard ->
+                            Spare spareCard ->
                                 [ pointer
                                 , Events.onClick
                                     (MoveSpareToFoundation
@@ -808,17 +802,8 @@ viewFoundations model =
                                     )
                                 ]
 
-                            SingleTableau tabCard tabCol ->
-                                [ pointer
-                                , Events.onClick
-                                    (MoveTableauToFoundation
-                                        [ tabCard ]
-                                        tabCol
-                                        foundationIndex
-                                    )
-                                ]
 
-                            ManyTableau tabCards tabCol ->
+                            Tableau tabCards tabCol ->
                                 [ pointer
                                 , Events.onClick
                                     (MoveTableauToFoundation
@@ -918,17 +903,8 @@ viewColumn model colIndex cards =
     let
         selAtts =
             case model.selection of
-                SingleTableau tabCard tabCol ->
-                    [ pointer
-                    , if colIndex == tabCol then
-                        Events.onClick ClearSelection
 
-                      else
-                        Events.onClick
-                            (MoveTableauToTableau [ tabCard ] tabCol colIndex)
-                    ]
-
-                ManyTableau tabCards tabCol ->
+                Tableau tabCards tabCol ->
                     [ pointer
                     , if colIndex == tabCol then
                         Events.onClick ClearSelection
@@ -938,7 +914,7 @@ viewColumn model colIndex cards =
                             (MoveTableauToTableau tabCards tabCol colIndex)
                     ]
 
-                SingleSpare spareCard ->
+                Spare spareCard ->
                     [ pointer
                     , Events.onClick (MoveSpareToTableau spareCard colIndex)
                     ]
@@ -1070,16 +1046,14 @@ viewCardFaceupHead model card =
 cardSelected : Selection -> Card -> Bool
 cardSelected selection card =
     case selection of
-        SingleSpare spareCard ->
+        Spare spareCard ->
             card == spareCard
 
-        SingleTableau tabCard _ ->
-            card == tabCard
 
-        ManyTableau tabCards _ ->
+        Tableau tabCards _ ->
             List.member card tabCards
 
-        NothingSelected ->
+        NoSelection ->
             False
 
 
