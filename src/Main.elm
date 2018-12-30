@@ -132,7 +132,7 @@ type Msg
     | MoveTableauToTableau (List Card) Int Int
     | MoveSpareToTableau Card Int
     | MoveSpareToFoundation Card Int
-    | MoveTableauToFoundation Card Int Int
+    | MoveTableauToFoundation (List Card) Int Int
     | Undo
     | Restart
 
@@ -295,7 +295,10 @@ update msg model =
                     in
                     case colIndex of
                         Just col ->
-                            if selectionValid cards then
+                            if
+                                selectionValidTableauMove cards
+                                    || selectionValidFoundationMove cards
+                            then
                                 case cards of
                                     [ c ] ->
                                         SingleTableau c col
@@ -373,18 +376,18 @@ update msg model =
                 False ->
                     ( model, Cmd.none )
 
-        MoveTableauToFoundation card fromTab toFnd ->
-            case validateTableauToFoundation model.board card fromTab toFnd of
+        MoveTableauToFoundation cards fromTab toFnd ->
+            case validateTableauToFoundation model.board cards fromTab toFnd of
                 True ->
                     ( { model
                         | board =
                             moveTableauToFoundation
                                 model.board
-                                card
+                                cards
                                 fromTab
                                 toFnd
                         , selection = NothingSelected
-                        , moves = model.moves + 1
+                        , moves = model.moves + List.length cards
                         , undoHistory = model.board :: model.undoHistory
                       }
                     , Cmd.none
@@ -568,32 +571,43 @@ moveSpareToFoundation board card toFnd =
     }
 
 
-validateTableauToFoundation : Board -> Card -> Int -> Int -> Bool
-validateTableauToFoundation board card fromTab toFnd =
+validateTableauToFoundation : Board -> List Card -> Int -> Int -> Bool
+validateTableauToFoundation board cards fromTab toFnd =
     let
+        sourceLast =
+            ListX.last cards
+
         destination =
             board.foundations
                 |> ListX.getAt toFnd
                 |> Maybe.withDefault []
                 |> ListX.last
     in
-    case destination of
-        Just c ->
-            cardsLinkFoundationBuild c card
+    case ( sourceLast, destination ) of
+        ( Just sL, Just c ) ->
+            selectionValidFoundationMove (List.reverse cards)
+                && cardsLinkFoundationBuild c sL
 
-        Nothing ->
-            card.rank == Ace
+        ( Just sL, Nothing ) ->
+            selectionValidFoundationMove (List.reverse cards)
+                && (sL.rank == Ace)
+
+        ( Nothing, _ ) ->
+            False
 
 
-moveTableauToFoundation : Board -> Card -> Int -> Int -> Board
-moveTableauToFoundation board card fromTab toFnd =
+moveTableauToFoundation : Board -> List Card -> Int -> Int -> Board
+moveTableauToFoundation board cards fromTab toFnd =
     { board
         | tableau =
             board.tableau
                 |> Dict.map
                     (\k cs ->
                         if k == fromTab then
-                            cs |> List.reverse |> List.drop 1 |> List.reverse
+                            cs
+                                |> List.reverse
+                                |> List.drop (List.length cards)
+                                |> List.reverse
 
                         else
                             cs
@@ -604,7 +618,7 @@ moveTableauToFoundation board card fromTab toFnd =
                 |> List.indexedMap
                     (\foundationIndex cs ->
                         if foundationIndex == toFnd then
-                            cs ++ [ card ]
+                            cs ++ List.reverse cards
 
                         else
                             cs
@@ -678,15 +692,27 @@ selectFromCardInColumn card column =
             ListX.dropWhile (\c -> c /= card) cs
 
 
-selectionValid : List Card -> Bool
-selectionValid cards =
-    (List.length <| groupCardsByLink cards) == 1
+selectionValidTableauMove : List Card -> Bool
+selectionValidTableauMove cards =
+    (List.length <| groupCardsTableauMove cards) == 1
 
 
-groupCardsByLink : List Card -> List (List Card)
-groupCardsByLink cards =
+selectionValidFoundationMove : List Card -> Bool
+selectionValidFoundationMove cards =
+    (List.length <| groupCardsFoundationMove cards) == 1
+
+
+groupCardsTableauMove : List Card -> List (List Card)
+groupCardsTableauMove cards =
     cards
         |> ListX.groupWhile cardsLinkTableauMove
+        |> List.map (\( x, xs ) -> x :: xs)
+
+
+groupCardsFoundationMove : List Card -> List (List Card)
+groupCardsFoundationMove cards =
+    cards
+        |> ListX.groupWhile cardsLinkFoundationBuild
         |> List.map (\( x, xs ) -> x :: xs)
 
 
@@ -786,7 +812,17 @@ viewFoundations model =
                                 [ pointer
                                 , Events.onClick
                                     (MoveTableauToFoundation
-                                        tabCard
+                                        [ tabCard ]
+                                        tabCol
+                                        foundationIndex
+                                    )
+                                ]
+
+                            ManyTableau tabCards tabCol ->
+                                [ pointer
+                                , Events.onClick
+                                    (MoveTableauToFoundation
+                                        tabCards
                                         tabCol
                                         foundationIndex
                                     )
