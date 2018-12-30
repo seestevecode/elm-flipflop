@@ -314,7 +314,7 @@ update msg model =
 
         MoveTableauToTableau cards fromCol toCol ->
             case validateTableauToTableau model.board cards fromCol toCol of
-                True ->
+                ( True, Just False ) ->
                     ( { model
                         | board =
                             moveTableauToTableau model.board cards fromCol toCol
@@ -325,7 +325,22 @@ update msg model =
                     , Cmd.none
                     )
 
-                False ->
+                ( True, Just True ) ->
+                    ( { model
+                        | board =
+                            moveTableauToTableau
+                                model.board
+                                (List.reverse cards)
+                                fromCol
+                                toCol
+                        , selection = NothingSelected
+                        , moves = model.moves + List.length cards
+                        , undoHistory = model.board :: model.undoHistory
+                      }
+                    , Cmd.none
+                    )
+
+                ( _, _ ) ->
                     ( model, Cmd.none )
 
         MoveSpareToTableau card toCol ->
@@ -362,7 +377,12 @@ update msg model =
             case validateTableauToFoundation model.board card fromTab toFnd of
                 True ->
                     ( { model
-                        | board = moveTableauToFoundation model.board card fromTab toFnd
+                        | board =
+                            moveTableauToFoundation
+                                model.board
+                                card
+                                fromTab
+                                toFnd
                         , selection = NothingSelected
                         , moves = model.moves + 1
                         , undoHistory = model.board :: model.undoHistory
@@ -404,24 +424,39 @@ update msg model =
                     )
 
 
-validateTableauToTableau : Board -> List Card -> Int -> Int -> Bool
+validateTableauToTableau :
+    Board
+    -> List Card
+    -> Int
+    -> Int
+    -> ( Bool, Maybe Bool )
 validateTableauToTableau board cards fromCol toCol =
     let
-        source =
+        sourceHead =
             List.head cards
+
+        sourceLast =
+            ListX.last cards
 
         destination =
             ListX.last <| getTableauColumn board.tableau toCol
     in
-    case ( source, destination ) of
-        ( Just s, Just d ) ->
-            cardsLinkTableauBuild s d
+    case ( sourceHead, sourceLast, destination ) of
+        ( Just sH, Just sL, Just d ) ->
+            if cardsLinkTableauBuild sH d then
+                ( True, Just False )
 
-        ( Just s, Nothing ) ->
-            True
+            else if cardsLinkTableauBuild sL d then
+                ( True, Just True )
 
-        ( Nothing, _ ) ->
-            False
+            else
+                ( False, Nothing )
+
+        ( _, _, Nothing ) ->
+            ( True, Just False )
+
+        ( _, _, _ ) ->
+            ( False, Nothing )
 
 
 moveTableauToTableau : Board -> List Card -> Int -> Int -> Board
@@ -719,7 +754,8 @@ view model =
                         none
                 ]
                 [ viewInfo model
-                , el [ centerX ] <| text "☰"
+                , Input.button [ centerX, Font.size <| floor (25 * scale) ]
+                    { onPress = Nothing, label = text "≡" }
                 , column [ spacing <| floor (20 * scale) ]
                     [ viewSpare model, viewStock model ]
                 , el [] <|
@@ -906,7 +942,9 @@ viewSpare model =
                     el globalCardAtts none
 
                 Just s ->
-                    viewCard model s [ Events.onClick <| SelectSpare s, pointer ]
+                    viewCard model
+                        s
+                        [ Events.onClick <| SelectSpare s, pointer ]
 
         selectAttr =
             [ Events.onClick SelectSpare, pointer ]
