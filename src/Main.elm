@@ -27,9 +27,9 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     let
         gameType =
-            { name = "2-suit"
+            { name = "1-suit"
             , numFoundations = 4
-            , numSuits = 2
+            , numSuits = 1
             , numTableauCards = 25
             , tableauColSizes = [ 5, 5, 5, 5, 5 ]
             }
@@ -40,6 +40,7 @@ init _ =
       , moves = 0
       , undoHistory = []
       , undoUsed = False
+      , gameState = NewGame
       }
     , Random.generate NewDeck <|
         Random.List.shuffle (deck gameType)
@@ -53,6 +54,7 @@ type alias Model =
     , moves : Int
     , undoHistory : List Board
     , undoUsed : Bool
+    , gameState : GameState
     }
 
 
@@ -120,6 +122,12 @@ type Selection
     = NoSelection
     | Spare Card
     | Tableau (List Card) Int
+
+
+type GameState
+    = NewGame
+    | Playing
+    | EndGame
 
 
 type Msg
