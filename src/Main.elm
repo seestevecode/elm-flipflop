@@ -933,8 +933,23 @@ viewColumn model colIndex cards =
 
                 _ ->
                     []
+
+        warningAtts =
+            if List.length cards >= 20 then
+                [ Border.color <| rgb255 250 100 42
+                , Border.widthEach { bottom = 5, top = 0, right = 0, left = 0 }
+                , Border.solid
+                ]
+
+            else
+                []
     in
-    column ([ alignTop, spacing -(floor <| 81 * scale) ] ++ selAtts) <|
+    column
+        ([ alignTop, spacing -(floor <| 81 * scale) ]
+            ++ selAtts
+            ++ warningAtts
+        )
+    <|
         case cards of
             [] ->
                 [ viewCardSpace [] ]
@@ -1204,3 +1219,8 @@ suitOutput suit =
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.none
+
+
+colWarningColumn : Color
+colWarningColumn =
+    rgb255 250 100 42
