@@ -306,7 +306,7 @@ update msg model =
                                 selectionValidTableauMove cards
                                     || selectionValidFoundationMove cards
                             then
-                                        Tableau cards col
+                                Tableau cards col
 
                             else
                                 model.selection
@@ -437,30 +437,29 @@ validateTableauToTableau :
     -> ( Bool, Maybe Bool )
 validateTableauToTableau board cards fromCol toCol =
     let
-        sourceHead =
-            List.head cards
-
-        sourceLast =
-            ListX.last cards
-
         destination =
             ListX.last <| getTableauColumn board.tableau toCol
     in
-    case ( sourceHead, sourceLast, destination ) of
-        ( Just sH, Just sL, Just d ) ->
-            if cardsLinkTableauBuild sH d then
-                ( True, Just False )
+    case checkTableauColumnLength board cards toCol of
+        True ->
+            case ( List.head cards, ListX.last cards, destination ) of
+                ( Just sourceHead, Just sourceLast, Just dest ) ->
+                    if cardsLinkTableauBuild sourceHead dest then
+                        ( True, Just False )
 
-            else if cardsLinkTableauBuild sL d then
-                ( True, Just True )
+                    else if cardsLinkTableauBuild sourceLast dest then
+                        ( True, Just True )
 
-            else
-                ( False, Nothing )
+                    else
+                        ( False, Nothing )
 
-        ( _, _, Nothing ) ->
-            ( True, Just False )
+                ( _, _, Nothing ) ->
+                    ( True, Just False )
 
-        ( _, _, _ ) ->
+                ( _, _, _ ) ->
+                    ( False, Nothing )
+
+        False ->
             ( False, Nothing )
 
 
@@ -493,12 +492,14 @@ validateSpareToTableau board card toCol =
         destination =
             ListX.last <| getTableauColumn board.tableau toCol
     in
-    case destination of
-        Just d ->
-            cardsLinkTableauBuild card d
+    checkTableauColumnLength board [ card ] toCol
+        && (case destination of
+                Just d ->
+                    cardsLinkTableauBuild card d
 
-        Nothing ->
-            True
+                Nothing ->
+                    True
+           )
 
 
 moveSpareToTableau : Board -> Card -> Int -> Board
@@ -626,6 +627,11 @@ moveTableauToFoundation board cards fromTab toFnd =
                             cs
                     )
     }
+
+
+checkTableauColumnLength : Board -> List Card -> Int -> Bool
+checkTableauColumnLength board cards toCol =
+    List.length (getTableauColumn board.tableau toCol ++ cards) <= 20
 
 
 addCardsFromStock : Board -> Board
@@ -810,7 +816,6 @@ viewFoundations model =
                                     )
                                 ]
 
-
                             Tableau tabCards tabCol ->
                                 [ pointer
                                 , Events.onClick
@@ -911,7 +916,6 @@ viewColumn model colIndex cards =
     let
         selAtts =
             case model.selection of
-
                 Tableau tabCards tabCol ->
                     [ pointer
                     , if colIndex == tabCol then
@@ -1056,7 +1060,6 @@ cardSelected selection card =
     case selection of
         Spare spareCard ->
             card == spareCard
-
 
         Tableau tabCards _ ->
             List.member card tabCards
