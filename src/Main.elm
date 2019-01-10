@@ -25,26 +25,7 @@ main =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    let
-        gameType =
-            { name = "1-suit"
-            , numFoundations = 4
-            , numSuits = 1
-            , numTableauCards = 25
-            , tableauColSizes = [ 5, 5, 5, 5, 5 ]
-            }
-    in
-    ( { gameType = gameType
-      , board = boardFromDeck gameType <| deck gameType
-      , selection = NoSelection
-      , moves = 0
-      , undoHistory = []
-      , undoUsed = False
-      , gameState = NewGame
-      }
-    , Random.generate NewDeck <|
-        Random.List.shuffle (deck gameType)
-    )
+    ( initModel <| getGameType 0, Cmd.none )
 
 
 type alias Model =
@@ -58,6 +39,18 @@ type alias Model =
     }
 
 
+initModel : GameType -> Model
+initModel gameType =
+    { gameType = gameType
+    , board = boardFromDeck gameType <| deck gameType
+    , selection = NoSelection
+    , moves = 0
+    , undoHistory = []
+    , undoUsed = False
+    , gameState = NewGame
+    }
+
+
 type alias GameType =
     { name : String
     , numFoundations : Int
@@ -67,15 +60,22 @@ type alias GameType =
     }
 
 
-validGameTypes : List GameType
+validGameTypes : Dict Int GameType
 validGameTypes =
-    [ GameType "1-suit" 4 1 25 [ 5, 5, 5, 5, 5 ]
-    , GameType "2-suit" 4 2 25 [ 5, 5, 5, 5, 5 ]
-    , GameType "3-suit" 4 3 25 [ 5, 5, 5, 5, 5 ]
-    , GameType "4-suit" 4 4 25 [ 5, 5, 5, 5, 5 ]
-    , GameType "5-suit" 5 5 28 [ 6, 6, 6, 5, 5 ]
-    , GameType "1-suit Extra" 5 1 28 [ 6, 6, 6, 5, 5 ]
-    ]
+    let
+        gameTypes =
+            [ GameType "1-suit" 4 1 25 [ 5, 5, 5, 5, 5 ]
+            , GameType "2-suit" 4 2 25 [ 5, 5, 5, 5, 5 ]
+            , GameType "3-suit" 4 3 25 [ 5, 5, 5, 5, 5 ]
+            , GameType "4-suit" 4 4 25 [ 5, 5, 5, 5, 5 ]
+            , GameType "5-suit" 5 5 28 [ 6, 6, 6, 5, 5 ]
+            , GameType "1-suit Extra" 5 1 28 [ 6, 6, 6, 5, 5 ]
+            ]
+
+        indices =
+            List.range 0 (List.length gameTypes - 1)
+    in
+    List.map2 Tuple.pair indices gameTypes |> Dict.fromList
 
 
 type alias Board =
@@ -127,7 +127,7 @@ type Selection
 type GameState
     = NewGame
     | Playing
-    | EndGame
+    | GameOver
 
 
 type Msg
@@ -142,6 +142,7 @@ type Msg
     | MoveTableauToFoundation (List Card) Int Int
     | Undo
     | Restart
+    | StartGame GameType
 
 
 boardFromDeck : GameType -> List Card -> Board
@@ -427,6 +428,21 @@ update msg model =
                       }
                     , Cmd.none
                     )
+
+        StartGame newGameType ->
+            ( initModel newGameType |> updateGameState
+            , Random.generate NewDeck <| Random.List.shuffle <| deck newGameType
+            )
+
+
+updateGameState : Model -> Model
+updateGameState model =
+    case model.gameState of
+        NewGame ->
+            { model | gameState = Playing }
+
+        _ ->
+            model
 
 
 validateTableauToTableau :
@@ -757,46 +773,105 @@ scale =
 view : Model -> Html Msg
 view model =
     layout
-        [ padding <| floor (10 * scale)
-        , Background.color <| rgb255 157 120 85
-        ]
+        [ padding <| floor (10 * scale), Background.color <| rgb255 157 120 85 ]
     <|
         row [ spacing <| floor (25 * scale), height fill ]
-            [ column [ spacing <| floor (25 * scale), alignTop ]
-                [ viewFoundations model
-                , viewTableau model
-                ]
-            , column
-                [ spacing <| floor (25 * scale)
-                , alignTop
-                , width fill
-                , height fill
-                , padding <| floor (10 * scale)
-                , Background.color <| rgba 0 0 0 0.25
-                , Font.size <| floor (15 * scale)
-                , Font.color <| rgb 1 1 1
-                , inFront <|
-                    if List.length model.undoHistory >= 1 then
-                        row
-                            [ alignBottom
-                            , width fill
-                            , padding <| floor (10 * scale)
-                            ]
-                            [ viewUndoButton, viewRestartButton ]
+            [ viewMain model, viewSidebar model ]
 
-                    else
-                        none
+
+viewMain : Model -> Element Msg
+viewMain model =
+    column
+        [ spacing <| floor (25 * scale)
+        , alignTop
+        , width <| cardWidth 6
+        ]
+    <|
+        case model.gameState of
+            NewGame ->
+                [ none ]
+
+            Playing ->
+                [ viewFoundations model, viewTableau model ]
+
+            GameOver ->
+                [ none ]
+
+
+viewDebug : Model -> Element Msg
+viewDebug model =
+    paragraph []
+        [ text <| Debug.toString <| model.gameState
+        , text <| Debug.toString <| model.gameType
+        ]
+
+
+viewSidebar : Model -> Element Msg
+viewSidebar model =
+    let
+        sidebarHeader =
+            el [ centerX, Font.size <| floor (22 * scale), Font.bold ] <|
+                text "FlipFlop"
+
+        sidebarBurger =
+            Input.button [ centerX, Font.size <| floor (25 * scale) ]
+                { onPress = Nothing, label = text "≡" }
+    in
+    column sidebarAtts <|
+        case model.gameState of
+            NewGame ->
+                [ sidebarHeader
+                , el [] <| text "New Game"
+                , sidebarBurger
+                , viewSelectGame
                 ]
-                [ viewInfo model
-                , Input.button [ centerX, Font.size <| floor (25 * scale) ]
-                    { onPress = Nothing, label = text "≡" }
-                , column [ spacing <| floor (20 * scale) ]
-                    [ viewSpare model, viewStock model ]
-                , el [] <|
-                    paragraph [ alignTop ]
-                        [ text "Some stuff goes in here." ]
+
+            Playing ->
+                [ sidebarHeader
+                , viewInfo model
+                , sidebarBurger
+                , viewSpare model
+                , viewStock model
                 ]
-            ]
+
+            GameOver ->
+                [ sidebarHeader
+                , el [] <| text "Game Over"
+                , sidebarBurger
+                , viewSelectGame
+                ]
+
+
+sidebarAtts : List (Attribute Msg)
+sidebarAtts =
+    [ spacing <| floor (25 * scale)
+    , alignTop
+    , width <| cardWidth 2.5
+    , height fill
+    , padding <| floor (10 * scale)
+    , Background.color <| rgba 0 0 0 0.25
+    , Font.size <| floor (15 * scale)
+    , Font.color <| rgb 1 1 1
+    ]
+
+
+viewSelectGame : Element Msg
+viewSelectGame =
+    let
+        newGameLink gameType =
+            Input.button [ centerX ]
+                { onPress = Just (StartGame <| getGameType gameType)
+                , label = text <| .name <| getGameType gameType
+                }
+    in
+    column [ spacing <| floor (20 * scale) ] <|
+        List.map newGameLink (Dict.keys validGameTypes)
+
+
+getGameType : Int -> GameType
+getGameType gameTypeIndex =
+    Dict.get gameTypeIndex validGameTypes
+        |> Maybe.withDefault (GameType "1-suit" 4 1 25 [ 5, 5, 5, 5, 5 ])
 
 
 viewFoundations : Model -> Element Msg
@@ -854,9 +929,7 @@ viewInfo model =
         , Font.color <| rgb 1 1 1
         , centerX
         ]
-        [ el [ centerX, Font.size <| floor (22 * scale), Font.bold ] <|
-            text "FlipFlop"
-        , el [ centerX, Font.size <| floor (18 * scale), Font.bold ] <|
+        [ el [ centerX, Font.size <| floor (18 * scale), Font.bold ] <|
             text <|
                 model.gameType.name
         , viewProgress <| numFoundationCards / numTargetCards
@@ -1142,9 +1215,10 @@ globalCardAtts =
     ]
 
 
-cardWidth : Int -> Length
+cardWidth : Float -> Length
 cardWidth cards =
-    px <| floor (68 * scale * toFloat cards)
+    
+    px <| floor (68 * scale * cards)
 
 
 cardHeight : Int -> Length
