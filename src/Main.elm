@@ -87,7 +87,7 @@ type alias Board =
 
 
 type alias Card =
-    { rank : Rank, suit : Suit, faceUp : Bool, id : Int }
+    { rank : Rank, suit : Suit, orientation : Orientation, id : Int }
 
 
 type Rank
@@ -112,6 +112,11 @@ type Suit
     | Clubs
     | Diamonds
     | Stars
+
+
+type Orientation
+    = FaceUp
+    | FaceDown
 
 
 type alias Tableau =
@@ -201,7 +206,7 @@ deck gameType =
                 |> List.concatMap (\( c, cs ) -> c :: cs)
 
         allFaceDown =
-            List.repeat (gameType.numFoundations * 13) False
+            List.repeat (gameType.numFoundations * 13) FaceDown
 
         ids =
             List.range 1 (gameType.numFoundations * 13)
@@ -248,7 +253,7 @@ turnUpEndCards tableau =
 
 turnUp : Card -> Card
 turnUp card =
-    { card | faceUp = True }
+    { card | orientation = FaceUp }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -1096,11 +1101,11 @@ viewStockRow els =
 
 viewCard : Model -> Card -> List (Attribute Msg) -> Element Msg
 viewCard model card attr =
-    case card.faceUp of
-        True ->
+    case card.orientation of
+        FaceUp ->
             viewCardFaceup model card attr
 
-        False ->
+        FaceDown ->
             viewCardFacedown
 
 
@@ -1217,7 +1222,6 @@ globalCardAtts =
 
 cardWidth : Float -> Length
 cardWidth cards =
-    
     px <| floor (68 * scale * cards)
 
 
