@@ -14,6 +14,16 @@ import Random
 import Random.List
 
 
+scale : Float
+scale =
+    1
+
+
+showDebug : Bool
+showDebug =
+    True
+
+
 main =
     Browser.element
         { init = init
@@ -39,18 +49,6 @@ type alias Model =
     }
 
 
-initModel : GameType -> Model
-initModel gameType =
-    { gameType = gameType
-    , board = boardFromDeck gameType <| deck gameType
-    , selection = NoSelection
-    , moves = 0
-    , undoHistory = []
-    , undoUsed = False
-    , gameState = NewGame
-    }
-
-
 type alias GameType =
     { name : String
     , numFoundations : Int
@@ -58,24 +56,6 @@ type alias GameType =
     , numTableauCards : Int
     , tableauColSizes : List Int
     }
-
-
-validGameTypes : Dict Int GameType
-validGameTypes =
-    let
-        gameTypes =
-            [ GameType "1-suit" 4 1 25 [ 5, 5, 5, 5, 5 ]
-            , GameType "2-suit" 4 2 25 [ 5, 5, 5, 5, 5 ]
-            , GameType "3-suit" 4 3 25 [ 5, 5, 5, 5, 5 ]
-            , GameType "4-suit" 4 4 25 [ 5, 5, 5, 5, 5 ]
-            , GameType "5-suit" 5 5 28 [ 6, 6, 6, 5, 5 ]
-            , GameType "1-suit Extra" 5 1 28 [ 6, 6, 6, 5, 5 ]
-            ]
-
-        indices =
-            List.range 0 (List.length gameTypes - 1)
-    in
-    List.map2 Tuple.pair indices gameTypes |> Dict.fromList
 
 
 type alias Board =
@@ -137,17 +117,37 @@ type GameState
 
 type Msg
     = NewDeck (List Card)
-    | AddCardsFromStock
-    | ClearSelection
-    | SelectSpare Card
-    | SelectTableau Card
-    | MoveTableauToTableau (List Card) Int Int
-    | MoveSpareToTableau Card Int
-    | MoveSpareToFoundation Card Int
-    | MoveTableauToFoundation (List Card) Int Int
     | Undo
     | Restart
     | StartGame GameType
+    | SelectMsg SelectMsg
+    | MoveMsg MoveMsg
+
+
+type SelectMsg
+    = ClearSelection
+    | SelectSpare Card
+    | SelectTableau Card
+
+
+type MoveMsg
+    = MoveTableauToTableau (List Card) Int Int
+    | MoveSpareToTableau Card Int
+    | MoveSpareToFoundation Card Int
+    | MoveTableauToFoundation (List Card) Int Int
+    | MoveStockToTableau
+
+
+initModel : GameType -> Model
+initModel gameType =
+    { gameType = gameType
+    , board = boardFromDeck gameType <| deck gameType
+    , selection = NoSelection
+    , moves = 0
+    , undoHistory = []
+    , undoUsed = False
+    , gameState = NewGame
+    }
 
 
 boardFromDeck : GameType -> List Card -> Board
@@ -188,6 +188,25 @@ buildTableau gameType cards =
     List.map2 Tuple.pair tableauIndices tableauColumns
         |> Dict.fromList
         |> turnUpEndCards
+
+
+turnUpEndCards : Tableau -> Tableau
+turnUpEndCards tableau =
+    tableau
+        |> Dict.map
+            (\_ cards ->
+                case List.reverse cards of
+                    [] ->
+                        []
+
+                    last :: restReversed ->
+                        turnUp last :: restReversed |> List.reverse
+            )
+
+
+turnUp : Card -> Card
+turnUp card =
+    { card | orientation = FaceUp }
 
 
 deck : GameType -> List Card
@@ -237,23 +256,28 @@ orderedSuits =
     [ Spades, Hearts, Diamonds, Clubs, Stars ]
 
 
-turnUpEndCards : Tableau -> Tableau
-turnUpEndCards tableau =
-    tableau
-        |> Dict.map
-            (\_ cards ->
-                case List.reverse cards of
-                    [] ->
-                        []
-
-                    last :: restReversed ->
-                        turnUp last :: restReversed |> List.reverse
-            )
+getGameType : Int -> GameType
+getGameType gameTypeIndex =
+    Dict.get gameTypeIndex validGameTypes
+        |> Maybe.withDefault (GameType "1-suit" 4 1 25 [ 5, 5, 5, 5, 5 ])
 
 
-turnUp : Card -> Card
-turnUp card =
-    { card | orientation = FaceUp }
+validGameTypes : Dict Int GameType
+validGameTypes =
+    let
+        gameTypes =
+            [ GameType "1-suit" 4 1 25 [ 5, 5, 5, 5, 5 ]
+            , GameType "2-suit" 4 2 25 [ 5, 5, 5, 5, 5 ]
+            , GameType "3-suit" 4 3 25 [ 5, 5, 5, 5, 5 ]
+            , GameType "4-suit" 4 4 25 [ 5, 5, 5, 5, 5 ]
+            , GameType "5-suit" 5 5 28 [ 6, 6, 6, 5, 5 ]
+            , GameType "1-suit Extra" 5 1 28 [ 6, 6, 6, 5, 5 ]
+            ]
+
+        indices =
+            List.range 0 (List.length gameTypes - 1)
+    in
+    List.map2 Tuple.pair indices gameTypes |> Dict.fromList
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -266,35 +290,53 @@ update msg model =
             , Cmd.none
             )
 
-        AddCardsFromStock ->
-            ( { model
-                | board = addCardsFromStock model.board
-                , selection = NoSelection
-                , moves = model.moves + 1
-                , undoHistory = model.board :: model.undoHistory
-              }
-            , Cmd.none
+        Undo ->
+            case model.undoHistory of
+                [] ->
+                    ( model, Cmd.none )
+
+                last :: rest ->
+                    ( { model
+                        | board = last
+                        , selection = NoSelection
+                        , undoHistory = rest
+                        , undoUsed = True
+                      }
+                    , Cmd.none
+                    )
+
+        Restart ->
+            case List.reverse model.undoHistory of
+                [] ->
+                    ( model, Cmd.none )
+
+                first :: _ ->
+                    ( { model
+                        | board = first
+                        , selection = NoSelection
+                        , undoHistory = []
+                        , undoUsed = True
+                      }
+                    , Cmd.none
+                    )
+
+        StartGame newGameType ->
+            ( initModel newGameType |> updateGameState
+            , Random.generate NewDeck <| Random.List.shuffle <| deck newGameType
             )
 
+        SelectMsg subMsg ->
+            updateSelect subMsg model
+
+        MoveMsg subMsg ->
+            updateMove subMsg model
+
+
+updateSelect : SelectMsg -> Model -> ( Model, Cmd Msg )
+updateSelect msg model =
+    case msg of
         ClearSelection ->
             ( { model | selection = NoSelection }, Cmd.none )
-
-        SelectSpare card ->
-            ( { model
-                | selection =
-                    case model.selection of
-                        Spare c ->
-                            if c == card then
-                                NoSelection
-
-                            else
-                                Spare card
-
-                        _ ->
-                            Spare card
-              }
-            , Cmd.none
-            )
 
         SelectTableau card ->
             ( { model
@@ -323,6 +365,27 @@ update msg model =
             , Cmd.none
             )
 
+        SelectSpare card ->
+            ( { model
+                | selection =
+                    case model.selection of
+                        Spare c ->
+                            if c == card then
+                                NoSelection
+
+                            else
+                                Spare card
+
+                        _ ->
+                            Spare card
+              }
+            , Cmd.none
+            )
+
+
+updateMove : MoveMsg -> Model -> ( Model, Cmd Msg )
+updateMove msg model =
+    case msg of
         MoveTableauToTableau cards fromCol toCol ->
             case validateTableauToTableau model.board cards fromCol toCol of
                 ( True, Just False ) ->
@@ -404,50 +467,116 @@ update msg model =
                 False ->
                     ( model, Cmd.none )
 
-        Undo ->
-            case model.undoHistory of
-                [] ->
-                    ( model, Cmd.none )
-
-                last :: rest ->
-                    ( { model
-                        | board = last
-                        , selection = NoSelection
-                        , undoHistory = rest
-                        , undoUsed = True
-                      }
-                    , Cmd.none
-                    )
-
-        Restart ->
-            case List.reverse model.undoHistory of
-                [] ->
-                    ( model, Cmd.none )
-
-                first :: _ ->
-                    ( { model
-                        | board = first
-                        , selection = NoSelection
-                        , undoHistory = []
-                        , undoUsed = True
-                      }
-                    , Cmd.none
-                    )
-
-        StartGame newGameType ->
-            ( initModel newGameType |> updateGameState
-            , Random.generate NewDeck <| Random.List.shuffle <| deck newGameType
+        MoveStockToTableau ->
+            ( { model
+                | board = addCardsFromStock model.board
+                , selection = NoSelection
+                , moves = model.moves + 1
+                , undoHistory = model.board :: model.undoHistory
+              }
+            , Cmd.none
             )
 
 
-updateGameState : Model -> Model
-updateGameState model =
-    case model.gameState of
-        NewGame ->
-            { model | gameState = Playing }
+addCardsFromStock : Board -> Board
+addCardsFromStock board =
+    { board
+        | tableau =
+            let
+                tableauList : List ( Int, List Card )
+                tableauList =
+                    Dict.toList board.tableau
 
-        _ ->
-            model
+                stockList : List Card
+                stockList =
+                    List.take 1 board.stock
+                        |> List.concat
+            in
+            List.map2
+                (\( k, tabCards ) stockCard ->
+                    ( k, tabCards ++ List.singleton stockCard )
+                )
+                tableauList
+                stockList
+                |> Dict.fromList
+                |> turnUpEndCards
+        , stock = List.drop 1 board.stock
+    }
+
+
+selectFromCardInTableau : Card -> Tableau -> List Card
+selectFromCardInTableau card tableau =
+    Dict.foldl
+        (\_ column tail ->
+            case tail of
+                [] ->
+                    selectFromCardInColumn card column
+
+                _ ->
+                    tail
+        )
+        []
+        tableau
+
+
+selectFromCardInColumn : Card -> List Card -> List Card
+selectFromCardInColumn card column =
+    case column of
+        [] ->
+            []
+
+        [ c ] ->
+            if c == card then
+                [ c ]
+
+            else
+                []
+
+        cs ->
+            ListX.dropWhile (\c -> c /= card) cs
+
+
+selectionValidTableauMove : List Card -> Bool
+selectionValidTableauMove cards =
+    (List.length <| groupCardsTableauMove cards) == 1
+
+
+groupCardsTableauMove : List Card -> List (List Card)
+groupCardsTableauMove cards =
+    cards
+        |> ListX.groupWhile cardsLinkTableauMove
+        |> List.map (\( x, xs ) -> x :: xs)
+
+
+cardsLinkTableauMove : Card -> Card -> Bool
+cardsLinkTableauMove x y =
+    (List.member ( x.rank, y.rank ) consecutiveRanks
+        || List.member ( y.rank, x.rank ) consecutiveRanks
+    )
+        && (x.suit == y.suit)
+
+
+consecutiveRanks : List ( Rank, Rank )
+consecutiveRanks =
+    ListX.zip orderedRanks (List.drop 1 orderedRanks)
+
+
+selectionValidFoundationMove : List Card -> Bool
+selectionValidFoundationMove cards =
+    (List.length <| groupCardsFoundationMove cards) == 1
+
+
+groupCardsFoundationMove : List Card -> List (List Card)
+groupCardsFoundationMove cards =
+    cards
+        |> ListX.groupWhile cardsLinkFoundationBuild
+        |> List.map (\( x, xs ) -> x :: xs)
+
+
+cardsLinkFoundationBuild : Card -> Card -> Bool
+cardsLinkFoundationBuild x y =
+    List.member ( x.rank, y.rank ) consecutiveRanks
+        && (x.suit == y.suit)
 
 
 validateTableauToTableau :
@@ -482,6 +611,25 @@ validateTableauToTableau board cards fromCol toCol =
 
         False ->
             ( False, Nothing )
+
+
+getTableauColumn : Tableau -> Int -> List Card
+getTableauColumn tableau colIndex =
+    tableau
+        |> Dict.filter (\k _ -> k == colIndex)
+        |> Dict.values
+        |> List.concat
+
+
+checkTableauColumnLength : Board -> List Card -> Int -> Bool
+checkTableauColumnLength board cards toCol =
+    List.length (getTableauColumn board.tableau toCol ++ cards) <= 20
+
+
+cardsLinkTableauBuild : Card -> Card -> Bool
+cardsLinkTableauBuild x y =
+    List.member ( x.rank, y.rank ) consecutiveRanks
+        || List.member ( y.rank, x.rank ) consecutiveRanks
 
 
 moveTableauToTableau : Board -> List Card -> Int -> Int -> Board
@@ -650,35 +798,14 @@ moveTableauToFoundation board cards fromTab toFnd =
     }
 
 
-checkTableauColumnLength : Board -> List Card -> Int -> Bool
-checkTableauColumnLength board cards toCol =
-    List.length (getTableauColumn board.tableau toCol ++ cards) <= 20
+updateGameState : Model -> Model
+updateGameState model =
+    case model.gameState of
+        NewGame ->
+            { model | gameState = Playing }
 
-
-addCardsFromStock : Board -> Board
-addCardsFromStock board =
-    { board
-        | tableau =
-            let
-                tableauList : List ( Int, List Card )
-                tableauList =
-                    Dict.toList board.tableau
-
-                stockList : List Card
-                stockList =
-                    List.take 1 board.stock
-                        |> List.concat
-            in
-            List.map2
-                (\( k, tabCards ) stockCard ->
-                    ( k, tabCards ++ List.singleton stockCard )
-                )
-                tableauList
-                stockList
-                |> Dict.fromList
-                |> turnUpEndCards
-        , stock = List.drop 1 board.stock
-    }
+        _ ->
+            model
 
 
 tableauColumn : Tableau -> Card -> Maybe Int
@@ -689,99 +816,20 @@ tableauColumn tableau card =
         |> List.head
 
 
-selectFromCardInTableau : Card -> Tableau -> List Card
-selectFromCardInTableau card tableau =
-    Dict.foldl
-        (\_ column tail ->
-            case tail of
-                [] ->
-                    selectFromCardInColumn card column
-
-                _ ->
-                    tail
-        )
-        []
-        tableau
-
-
-selectFromCardInColumn : Card -> List Card -> List Card
-selectFromCardInColumn card column =
-    case column of
-        [] ->
-            []
-
-        [ c ] ->
-            if c == card then
-                [ c ]
-
-            else
-                []
-
-        cs ->
-            ListX.dropWhile (\c -> c /= card) cs
-
-
-selectionValidTableauMove : List Card -> Bool
-selectionValidTableauMove cards =
-    (List.length <| groupCardsTableauMove cards) == 1
-
-
-selectionValidFoundationMove : List Card -> Bool
-selectionValidFoundationMove cards =
-    (List.length <| groupCardsFoundationMove cards) == 1
-
-
-groupCardsTableauMove : List Card -> List (List Card)
-groupCardsTableauMove cards =
-    cards
-        |> ListX.groupWhile cardsLinkTableauMove
-        |> List.map (\( x, xs ) -> x :: xs)
-
-
-groupCardsFoundationMove : List Card -> List (List Card)
-groupCardsFoundationMove cards =
-    cards
-        |> ListX.groupWhile cardsLinkFoundationBuild
-        |> List.map (\( x, xs ) -> x :: xs)
-
-
-cardsLinkTableauMove : Card -> Card -> Bool
-cardsLinkTableauMove x y =
-    (List.member ( x.rank, y.rank ) consecutiveRanks
-        || List.member ( y.rank, x.rank ) consecutiveRanks
-    )
-        && (x.suit == y.suit)
-
-
-cardsLinkTableauBuild : Card -> Card -> Bool
-cardsLinkTableauBuild x y =
-    List.member ( x.rank, y.rank ) consecutiveRanks
-        || List.member ( y.rank, x.rank ) consecutiveRanks
-
-
-cardsLinkFoundationBuild : Card -> Card -> Bool
-cardsLinkFoundationBuild x y =
-    List.member ( x.rank, y.rank ) consecutiveRanks
-        && (x.suit == y.suit)
-
-
-consecutiveRanks : List ( Rank, Rank )
-consecutiveRanks =
-    ListX.zip orderedRanks (List.drop 1 orderedRanks)
-
-
-scale : Float
-scale =
-    1
-
-
 view : Model -> Html Msg
 view model =
     layout
         [ padding <| floor (10 * scale), Background.color <| rgb255 157 120 85 ]
     <|
         row [ spacing <| floor (25 * scale), height fill ]
-            [ viewMain model, viewSidebar model ]
+            [ viewMain model
+            , viewSidebar model
+            , if showDebug then
+                viewDebug model
+
+              else
+                none
+            ]
 
 
 viewMain : Model -> Element Msg
@@ -801,6 +849,220 @@ viewMain model =
 
             GameOver ->
                 [ none ]
+
+
+cardWidth : Float -> Length
+cardWidth cards =
+    px <| floor (68 * scale * cards)
+
+
+viewFoundations : Model -> Element Msg
+viewFoundations model =
+    let
+        spacer =
+            case model.gameType.numFoundations of
+                4 ->
+                    [ el globalCardAtts none ]
+
+                _ ->
+                    [ none ]
+
+        foundations =
+            List.indexedMap (viewFoundation model) model.board.foundations
+    in
+    row [ spacing <| floor (10 * scale), centerX ] <| foundations ++ spacer
+
+
+globalCardAtts : List (Attribute Msg)
+globalCardAtts =
+    [ Border.rounded <| floor (4 * scale)
+    , width (cardWidth 1)
+    , height (cardHeight 1)
+    ]
+
+
+viewFoundation : Model -> Int -> List Card -> Element Msg
+viewFoundation model foundation cards =
+    let
+        selectAtts =
+            case model.selection of
+                Spare spareCard ->
+                    [ pointer
+                    , Events.onClick <|
+                        MoveMsg (MoveSpareToFoundation spareCard foundation)
+                    ]
+
+                Tableau tabCards tabCol ->
+                    [ pointer
+                    , Events.onClick <|
+                        MoveMsg (MoveTableauToFoundation tabCards tabCol foundation)
+                    ]
+
+                _ ->
+                    []
+    in
+    case List.reverse cards of
+        [] ->
+            viewCardSpace selectAtts
+
+        last :: _ ->
+            viewCard model last selectAtts
+
+
+viewCardSpace : List (Attribute Msg) -> Element Msg
+viewCardSpace atts =
+    el
+        (globalCardAtts
+            ++ atts
+            ++ [ Background.color <| rgba 0 0 0 0.25 ]
+        )
+    <|
+        none
+
+
+viewCard : Model -> Card -> List (Attribute Msg) -> Element Msg
+viewCard model card attr =
+    case card.orientation of
+        FaceUp ->
+            viewCardFaceup model card attr
+
+        FaceDown ->
+            viewCardFacedown
+
+
+viewCardFaceup : Model -> Card -> List (Attribute Msg) -> Element Msg
+viewCardFaceup model card attr =
+    column
+        (globalCardAtts
+            ++ attr
+            ++ [ Background.color <| rgb 1 1 1 ]
+        )
+        [ viewCardFaceupHead model card, viewCardFaceupBody card ]
+
+
+viewCardFaceupHead : Model -> Card -> Element Msg
+viewCardFaceupHead model card =
+    row
+        [ padding <| floor (3 * scale)
+        , width fill
+        , Font.size <| floor (20 * scale)
+        , spacing <| floor (3 * scale)
+        , Border.roundEach
+            { topLeft = floor (4 * scale)
+            , topRight = floor (4 * scale)
+            , bottomLeft = 0
+            , bottomRight = 0
+            }
+        , Background.color <| Tuple.second <| suitOutput card.suit
+        , Font.color <| rgb 1 1 1
+        ]
+        [ viewRank card.rank
+        , el [] <|
+            text <|
+                Tuple.first <|
+                    suitOutput card.suit
+        , if cardSelected model.selection card then
+            el [ alignRight, Font.color <| rgb 1 1 1 ] <| text "●"
+
+          else
+            none
+        ]
+
+
+suitOutput : Suit -> ( String, Color )
+suitOutput suit =
+    case suit of
+        Hearts ->
+            ( "♥", rgb255 218 87 53 )
+
+        Clubs ->
+            ( "♣", rgb255 114 147 181 )
+
+        Diamonds ->
+            ( "♦", rgb255 242 168 31 )
+
+        Spades ->
+            ( "♠", rgb255 54 55 36 )
+
+        Stars ->
+            ( "★", rgb255 109 167 128 )
+
+
+viewRank : Rank -> Element Msg
+viewRank rank =
+    el [] <|
+        text <|
+            case rank of
+                Ace ->
+                    "A"
+
+                Two ->
+                    "2"
+
+                Three ->
+                    "3"
+
+                Four ->
+                    "4"
+
+                Five ->
+                    "5"
+
+                Six ->
+                    "6"
+
+                Seven ->
+                    "7"
+
+                Eight ->
+                    "8"
+
+                Nine ->
+                    "9"
+
+                Ten ->
+                    "10"
+
+                Jack ->
+                    "J"
+
+                Queen ->
+                    "Q"
+
+                King ->
+                    "K"
+
+
+cardSelected : Selection -> Card -> Bool
+cardSelected selection card =
+    case selection of
+        Spare spareCard ->
+            card == spareCard
+
+        Tableau tabCards _ ->
+            List.member card tabCards
+
+        NoSelection ->
+            False
+
+
+viewCardFaceupBody : Card -> Element Msg
+viewCardFaceupBody card =
+    el
+        [ Font.size <| floor (75 * scale)
+        , centerX
+        , Font.color <| Tuple.second <| suitOutput card.suit
+        , paddingEach
+            { bottom = floor (10 * scale)
+            , left = 0
+            , right = 0
+            , top = 0
+            }
+        ]
+    <|
+        text <|
+            Tuple.first <|
+                suitOutput card.suit
 
 
 viewDebug : Model -> Element Msg
@@ -869,54 +1131,8 @@ viewSelectGame =
                 , label = text <| .name <| getGameType gameType
                 }
     in
-    column [ spacing <| floor (20 * scale) ] <|
+    column [ spacing <| floor (20 * scale), centerX ] <|
         List.map newGameLink (Dict.keys validGameTypes)
-
-
-getGameType : Int -> GameType
-getGameType gameTypeIndex =
-    Dict.get gameTypeIndex validGameTypes
-        |> Maybe.withDefault (GameType "1-suit" 4 1 25 [ 5, 5, 5, 5, 5 ])
-
-
-viewFoundations : Model -> Element Msg
-viewFoundations model =
-    row [ spacing <| floor (10 * scale) ] <|
-        List.indexedMap
-            (\foundationIndex foundationCards ->
-                let
-                    selectAtts =
-                        case model.selection of
-                            Spare spareCard ->
-                                [ pointer
-                                , Events.onClick
-                                    (MoveSpareToFoundation
-                                        spareCard
-                                        foundationIndex
-                                    )
-                                ]
-
-                            Tableau tabCards tabCol ->
-                                [ pointer
-                                , Events.onClick
-                                    (MoveTableauToFoundation
-                                        tabCards
-                                        tabCol
-                                        foundationIndex
-                                    )
-                                ]
-
-                            _ ->
-                                []
-                in
-                case List.reverse foundationCards of
-                    [] ->
-                        viewCardSpace selectAtts
-
-                    last :: _ ->
-                        viewCard model last selectAtts
-            )
-            model.board.foundations
 
 
 viewInfo : Model -> Element Msg
@@ -933,6 +1149,7 @@ viewInfo model =
         , spacing <| floor (10 * scale)
         , Font.color <| rgb 1 1 1
         , centerX
+        , height <| cardHeight 1.25
         ]
         [ el [ centerX, Font.size <| floor (18 * scale), Font.bold ] <|
             text <|
@@ -978,7 +1195,7 @@ viewRestartButton =
 
 viewTableau : Model -> Element Msg
 viewTableau model =
-    row [ spacing <| floor (10 * scale) ] <|
+    row [ spacing <| floor (10 * scale), centerX ] <|
         List.map
             (viewTableauColumn model)
             (Dict.keys model.board.tableau)
@@ -997,16 +1214,17 @@ viewColumn model colIndex cards =
                 Tableau tabCards tabCol ->
                     [ pointer
                     , if colIndex == tabCol then
-                        Events.onClick ClearSelection
+                        Events.onClick (SelectMsg ClearSelection)
 
                       else
-                        Events.onClick
-                            (MoveTableauToTableau tabCards tabCol colIndex)
+                        Events.onClick <|
+                            MoveMsg
+                                (MoveTableauToTableau tabCards tabCol colIndex)
                     ]
 
                 Spare spareCard ->
                     [ pointer
-                    , Events.onClick (MoveSpareToTableau spareCard colIndex)
+                    , Events.onClick <| MoveMsg (MoveSpareToTableau spareCard colIndex)
                     ]
 
                 _ ->
@@ -1037,17 +1255,9 @@ viewColumn model colIndex cards =
                     viewTabCard c =
                         viewCard model
                             c
-                            [ pointer, Events.onClick (SelectTableau c) ]
+                            [ pointer, Events.onClick <| SelectMsg (SelectTableau c) ]
                 in
                 List.map viewTabCard cs
-
-
-getTableauColumn : Tableau -> Int -> List Card
-getTableauColumn tableau colIndex =
-    tableau
-        |> Dict.filter (\k _ -> k == colIndex)
-        |> Dict.values
-        |> List.concat
 
 
 viewSpare : Model -> Element Msg
@@ -1061,7 +1271,7 @@ viewSpare model =
                 Just s ->
                     viewCard model
                         s
-                        [ Events.onClick <| SelectSpare s, pointer ]
+                        [ Events.onClick <| SelectMsg (SelectSpare s), pointer ]
 
         selectAttr =
             [ Events.onClick SelectSpare, pointer ]
@@ -1078,7 +1288,7 @@ viewStock model =
         stockSize =
             List.length model.board.stock
     in
-    el [ Events.onClick AddCardsFromStock, pointer ] <|
+    el [ Events.onClick (MoveMsg MoveStockToTableau), pointer ] <|
         viewStockRow <|
             List.repeat stockSize viewCardFacedown
 
@@ -1097,87 +1307,6 @@ viewStockRow els =
                     ]
                 <|
                     first
-
-
-viewCard : Model -> Card -> List (Attribute Msg) -> Element Msg
-viewCard model card attr =
-    case card.orientation of
-        FaceUp ->
-            viewCardFaceup model card attr
-
-        FaceDown ->
-            viewCardFacedown
-
-
-viewCardFaceup : Model -> Card -> List (Attribute Msg) -> Element Msg
-viewCardFaceup model card attr =
-    column
-        (globalCardAtts
-            ++ attr
-            ++ [ Background.color <| rgb 1 1 1 ]
-        )
-        [ viewCardFaceupHead model card, viewCardFaceupBody card ]
-
-
-viewCardFaceupHead : Model -> Card -> Element Msg
-viewCardFaceupHead model card =
-    row
-        [ padding <| floor (3 * scale)
-        , width fill
-        , Font.size <| floor (20 * scale)
-        , spacing <| floor (3 * scale)
-        , Border.roundEach
-            { topLeft = floor (4 * scale)
-            , topRight = floor (4 * scale)
-            , bottomLeft = 0
-            , bottomRight = 0
-            }
-        , Background.color <| Tuple.second <| suitOutput card.suit
-        , Font.color <| rgb 1 1 1
-        ]
-        [ viewRank card.rank
-        , el [] <|
-            text <|
-                Tuple.first <|
-                    suitOutput card.suit
-        , if cardSelected model.selection card then
-            el [ alignRight, Font.color <| rgb 1 1 1 ] <| text "●"
-
-          else
-            none
-        ]
-
-
-cardSelected : Selection -> Card -> Bool
-cardSelected selection card =
-    case selection of
-        Spare spareCard ->
-            card == spareCard
-
-        Tableau tabCards _ ->
-            List.member card tabCards
-
-        NoSelection ->
-            False
-
-
-viewCardFaceupBody : Card -> Element Msg
-viewCardFaceupBody card =
-    el
-        [ Font.size <| floor (75 * scale)
-        , centerX
-        , Font.color <| Tuple.second <| suitOutput card.suit
-        , paddingEach
-            { bottom = floor (10 * scale)
-            , left = 0
-            , right = 0
-            , top = 0
-            }
-        ]
-    <|
-        text <|
-            Tuple.first <|
-                suitOutput card.suit
 
 
 viewCardFacedown : Element Msg
@@ -1201,97 +1330,9 @@ viewCardFacedown =
             none
 
 
-viewCardSpace : List (Attribute Msg) -> Element Msg
-viewCardSpace atts =
-    el
-        (globalCardAtts
-            ++ atts
-            ++ [ Background.color <| rgba 0 0 0 0.25 ]
-        )
-    <|
-        none
-
-
-globalCardAtts : List (Attribute Msg)
-globalCardAtts =
-    [ Border.rounded <| floor (4 * scale)
-    , width (cardWidth 1)
-    , height (cardHeight 1)
-    ]
-
-
-cardWidth : Float -> Length
-cardWidth cards =
-    px <| floor (68 * scale * cards)
-
-
-cardHeight : Int -> Length
+cardHeight : Float -> Length
 cardHeight cards =
-    px <| floor (105 * scale * toFloat cards)
-
-
-viewRank : Rank -> Element Msg
-viewRank rank =
-    el [] <|
-        text <|
-            case rank of
-                Ace ->
-                    "A"
-
-                Two ->
-                    "2"
-
-                Three ->
-                    "3"
-
-                Four ->
-                    "4"
-
-                Five ->
-                    "5"
-
-                Six ->
-                    "6"
-
-                Seven ->
-                    "7"
-
-                Eight ->
-                    "8"
-
-                Nine ->
-                    "9"
-
-                Ten ->
-                    "10"
-
-                Jack ->
-                    "J"
-
-                Queen ->
-                    "Q"
-
-                King ->
-                    "K"
-
-
-suitOutput : Suit -> ( String, Color )
-suitOutput suit =
-    case suit of
-        Hearts ->
-            ( "♥", rgb255 218 87 53 )
-
-        Clubs ->
-            ( "♣", rgb255 114 147 181 )
-
-        Diamonds ->
-            ( "♦", rgb255 242 168 31 )
-
-        Spades ->
-            ( "♠", rgb255 54 55 36 )
-
-        Stars ->
-            ( "★", rgb255 109 167 128 )
+    px <| floor (105 * scale * cards)
 
 
 subscriptions : Model -> Sub Msg
