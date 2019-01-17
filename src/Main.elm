@@ -1,6 +1,8 @@
 module Main exposing (main)
 
+import Board exposing (Board)
 import Browser
+import Card exposing (Card)
 import Dict exposing (Dict)
 import Element exposing (..)
 import Element.Background as Background
@@ -58,51 +60,6 @@ type alias GameType =
     }
 
 
-type alias Board =
-    { foundations : List (List Card)
-    , tableau : Tableau
-    , spare : ( Maybe Card, Maybe Card )
-    , stock : List (List Card)
-    }
-
-
-type alias Card =
-    { rank : Rank, suit : Suit, orientation : Orientation, id : Int }
-
-
-type Rank
-    = Ace
-    | Two
-    | Three
-    | Four
-    | Five
-    | Six
-    | Seven
-    | Eight
-    | Nine
-    | Ten
-    | Jack
-    | Queen
-    | King
-
-
-type Suit
-    = Spades
-    | Hearts
-    | Clubs
-    | Diamonds
-    | Stars
-
-
-type Orientation
-    = FaceUp
-    | FaceDown
-
-
-type alias Tableau =
-    Dict Int (List Card)
-
-
 type Selection
     = NoSelection
     | Spare Card
@@ -121,21 +78,13 @@ type Msg
     | Restart
     | StartGame GameType
     | SelectMsg SelectMsg
-    | MoveMsg MoveMsg
+    | MoveMsg Board.MoveMsg
 
 
 type SelectMsg
     = ClearSelection
     | SelectSpare Card
     | SelectTableau Card
-
-
-type MoveMsg
-    = MoveTableauToTableau (List Card) Int Int
-    | MoveSpareToTableau Card Int
-    | MoveSpareToFoundation Card Int
-    | MoveTableauToFoundation (List Card) Int Int
-    | MoveStockToTableau
 
 
 initModel : GameType -> Model
@@ -163,7 +112,7 @@ boardFromDeck gameType cards =
                 cards
                     |> List.drop gameType.numTableauCards
                     |> List.take 2
-                    |> List.map turnUp
+                    |> List.map Card.turnUp
         in
         ( List.head spareCards, ListX.last spareCards )
     , stock =
@@ -173,7 +122,7 @@ boardFromDeck gameType cards =
     }
 
 
-buildTableau : GameType -> List Card -> Tableau
+buildTableau : GameType -> List Card -> Board.Tableau
 buildTableau gameType cards =
     let
         tableauIndices =
@@ -187,73 +136,31 @@ buildTableau gameType cards =
     in
     List.map2 Tuple.pair tableauIndices tableauColumns
         |> Dict.fromList
-        |> turnUpEndCards
-
-
-turnUpEndCards : Tableau -> Tableau
-turnUpEndCards tableau =
-    tableau
-        |> Dict.map
-            (\_ cards ->
-                case List.reverse cards of
-                    [] ->
-                        []
-
-                    last :: restReversed ->
-                        turnUp last :: restReversed |> List.reverse
-            )
-
-
-turnUp : Card -> Card
-turnUp card =
-    { card | orientation = FaceUp }
+        |> Board.turnUpEndCards
 
 
 deck : GameType -> List Card
 deck gameType =
     let
         ranks =
-            List.repeat gameType.numFoundations orderedRanks |> List.concat
+            List.repeat gameType.numFoundations Card.orderedRanks |> List.concat
 
         suits =
             ListX.cycle
                 gameType.numFoundations
-                (List.take gameType.numSuits orderedSuits)
+                (List.take gameType.numSuits Card.orderedSuits)
                 |> List.repeat 13
                 |> List.concat
                 |> ListX.gatherEquals
                 |> List.concatMap (\( c, cs ) -> c :: cs)
 
         allFaceDown =
-            List.repeat (gameType.numFoundations * 13) FaceDown
+            List.repeat (gameType.numFoundations * 13) Card.FaceDown
 
         ids =
             List.range 1 (gameType.numFoundations * 13)
     in
     List.map4 Card ranks suits allFaceDown ids
-
-
-orderedRanks : List Rank
-orderedRanks =
-    [ Ace
-    , Two
-    , Three
-    , Four
-    , Five
-    , Six
-    , Seven
-    , Eight
-    , Nine
-    , Ten
-    , Jack
-    , Queen
-    , King
-    ]
-
-
-orderedSuits : List Suit
-orderedSuits =
-    [ Spades, Hearts, Diamonds, Clubs, Stars ]
 
 
 getGameType : Int -> GameType
@@ -343,16 +250,18 @@ updateSelect msg model =
                 | selection =
                     let
                         cards =
-                            selectFromCardInTableau card model.board.tableau
+                            Board.selectFromCardInTableau
+                                card
+                                model.board.tableau
 
                         colIndex =
-                            tableauColumn model.board.tableau card
+                            Board.tableauColumn model.board.tableau card
                     in
                     case colIndex of
                         Just col ->
                             if
-                                selectionValidTableauMove cards
-                                    || selectionValidFoundationMove cards
+                                Card.selectionValidTableauMove cards
+                                    || Card.selectionValidFoundationMove cards
                             then
                                 Tableau cards col
 
@@ -383,15 +292,25 @@ updateSelect msg model =
             )
 
 
-updateMove : MoveMsg -> Model -> ( Model, Cmd Msg )
+updateMove : Board.MoveMsg -> Model -> ( Model, Cmd Msg )
 updateMove msg model =
     case msg of
-        MoveTableauToTableau cards fromCol toCol ->
-            case validateTableauToTableau model.board cards fromCol toCol of
+        Board.MoveTableauToTableau cards fromCol toCol ->
+            case
+                Board.validateTableauToTableau
+                    model.board
+                    cards
+                    fromCol
+                    toCol
+            of
                 ( True, Just False ) ->
                     ( { model
                         | board =
-                            moveTableauToTableau model.board cards fromCol toCol
+                            Board.moveTableauToTableau
+                                model.board
+                                cards
+                                fromCol
+                                toCol
                         , selection = NoSelection
                         , moves = model.moves + 1
                         , undoHistory = model.board :: model.undoHistory
@@ -402,7 +321,7 @@ updateMove msg model =
                 ( True, Just True ) ->
                     ( { model
                         | board =
-                            moveTableauToTableau
+                            Board.moveTableauToTableau
                                 model.board
                                 (List.reverse cards)
                                 fromCol
@@ -417,42 +336,54 @@ updateMove msg model =
                 ( _, _ ) ->
                     ( model, Cmd.none )
 
-        MoveSpareToTableau card toCol ->
-            case validateSpareToTableau model.board card toCol of
-                True ->
-                    ( { model
-                        | board = moveSpareToTableau model.board card toCol
-                        , selection = NoSelection
-                        , moves = model.moves + 1
-                        , undoHistory = model.board :: model.undoHistory
-                      }
-                    , Cmd.none
-                    )
-
-                False ->
-                    ( model, Cmd.none )
-
-        MoveSpareToFoundation card toFnd ->
-            case validateSpareToFoundation model.board card toFnd of
-                True ->
-                    ( { model
-                        | board = moveSpareToFoundation model.board card toFnd
-                        , selection = NoSelection
-                        , moves = model.moves + 1
-                        , undoHistory = model.board :: model.undoHistory
-                      }
-                    , Cmd.none
-                    )
-
-                False ->
-                    ( model, Cmd.none )
-
-        MoveTableauToFoundation cards fromTab toFnd ->
-            case validateTableauToFoundation model.board cards fromTab toFnd of
+        Board.MoveSpareToTableau card toCol ->
+            case Board.validateSpareToTableau model.board card toCol of
                 True ->
                     ( { model
                         | board =
-                            moveTableauToFoundation
+                            Board.moveSpareToTableau
+                                model.board
+                                card
+                                toCol
+                        , selection = NoSelection
+                        , moves = model.moves + 1
+                        , undoHistory = model.board :: model.undoHistory
+                      }
+                    , Cmd.none
+                    )
+
+                False ->
+                    ( model, Cmd.none )
+
+        Board.MoveSpareToFoundation card toFnd ->
+            case Board.validateSpareToFoundation model.board card toFnd of
+                True ->
+                    ( { model
+                        | board =
+                            Board.moveSpareToFoundation model.board
+                                card
+                                toFnd
+                        , selection = NoSelection
+                        , moves = model.moves + 1
+                        , undoHistory = model.board :: model.undoHistory
+                      }
+                    , Cmd.none
+                    )
+
+                False ->
+                    ( model, Cmd.none )
+
+        Board.MoveTableauToFoundation cards fromTab toFnd ->
+            case
+                Board.validateTableauToFoundation model.board
+                    cards
+                    fromTab
+                    toFnd
+            of
+                True ->
+                    ( { model
+                        | board =
+                            Board.moveTableauToFoundation
                                 model.board
                                 cards
                                 fromTab
@@ -467,335 +398,15 @@ updateMove msg model =
                 False ->
                     ( model, Cmd.none )
 
-        MoveStockToTableau ->
+        Board.MoveStockToTableau ->
             ( { model
-                | board = addCardsFromStock model.board
+                | board = Board.addCardsFromStock model.board
                 , selection = NoSelection
                 , moves = model.moves + 1
                 , undoHistory = model.board :: model.undoHistory
               }
             , Cmd.none
             )
-
-
-addCardsFromStock : Board -> Board
-addCardsFromStock board =
-    { board
-        | tableau =
-            let
-                tableauList : List ( Int, List Card )
-                tableauList =
-                    Dict.toList board.tableau
-
-                stockList : List Card
-                stockList =
-                    List.take 1 board.stock
-                        |> List.concat
-            in
-            List.map2
-                (\( k, tabCards ) stockCard ->
-                    ( k, tabCards ++ List.singleton stockCard )
-                )
-                tableauList
-                stockList
-                |> Dict.fromList
-                |> turnUpEndCards
-        , stock = List.drop 1 board.stock
-    }
-
-
-selectFromCardInTableau : Card -> Tableau -> List Card
-selectFromCardInTableau card tableau =
-    Dict.foldl
-        (\_ column tail ->
-            case tail of
-                [] ->
-                    selectFromCardInColumn card column
-
-                _ ->
-                    tail
-        )
-        []
-        tableau
-
-
-selectFromCardInColumn : Card -> List Card -> List Card
-selectFromCardInColumn card column =
-    case column of
-        [] ->
-            []
-
-        [ c ] ->
-            if c == card then
-                [ c ]
-
-            else
-                []
-
-        cs ->
-            ListX.dropWhile (\c -> c /= card) cs
-
-
-selectionValidTableauMove : List Card -> Bool
-selectionValidTableauMove cards =
-    (List.length <| groupCardsTableauMove cards) == 1
-
-
-groupCardsTableauMove : List Card -> List (List Card)
-groupCardsTableauMove cards =
-    cards
-        |> ListX.groupWhile cardsLinkTableauMove
-        |> List.map (\( x, xs ) -> x :: xs)
-
-
-cardsLinkTableauMove : Card -> Card -> Bool
-cardsLinkTableauMove x y =
-    (List.member ( x.rank, y.rank ) consecutiveRanks
-        || List.member ( y.rank, x.rank ) consecutiveRanks
-    )
-        && (x.suit == y.suit)
-
-
-consecutiveRanks : List ( Rank, Rank )
-consecutiveRanks =
-    ListX.zip orderedRanks (List.drop 1 orderedRanks)
-
-
-selectionValidFoundationMove : List Card -> Bool
-selectionValidFoundationMove cards =
-    (List.length <| groupCardsFoundationMove cards) == 1
-
-
-groupCardsFoundationMove : List Card -> List (List Card)
-groupCardsFoundationMove cards =
-    cards
-        |> ListX.groupWhile cardsLinkFoundationBuild
-        |> List.map (\( x, xs ) -> x :: xs)
-
-
-cardsLinkFoundationBuild : Card -> Card -> Bool
-cardsLinkFoundationBuild x y =
-    List.member ( x.rank, y.rank ) consecutiveRanks
-        && (x.suit == y.suit)
-
-
-validateTableauToTableau :
-    Board
-    -> List Card
-    -> Int
-    -> Int
-    -> ( Bool, Maybe Bool )
-validateTableauToTableau board cards fromCol toCol =
-    let
-        destination =
-            ListX.last <| getTableauColumn board.tableau toCol
-    in
-    case checkTableauColumnLength board cards toCol of
-        True ->
-            case ( List.head cards, ListX.last cards, destination ) of
-                ( Just sourceHead, Just sourceLast, Just dest ) ->
-                    if cardsLinkTableauBuild sourceHead dest then
-                        ( True, Just False )
-
-                    else if cardsLinkTableauBuild sourceLast dest then
-                        ( True, Just True )
-
-                    else
-                        ( False, Nothing )
-
-                ( _, _, Nothing ) ->
-                    ( True, Just False )
-
-                ( _, _, _ ) ->
-                    ( False, Nothing )
-
-        False ->
-            ( False, Nothing )
-
-
-getTableauColumn : Tableau -> Int -> List Card
-getTableauColumn tableau colIndex =
-    tableau
-        |> Dict.filter (\k _ -> k == colIndex)
-        |> Dict.values
-        |> List.concat
-
-
-checkTableauColumnLength : Board -> List Card -> Int -> Bool
-checkTableauColumnLength board cards toCol =
-    List.length (getTableauColumn board.tableau toCol ++ cards) <= 20
-
-
-cardsLinkTableauBuild : Card -> Card -> Bool
-cardsLinkTableauBuild x y =
-    List.member ( x.rank, y.rank ) consecutiveRanks
-        || List.member ( y.rank, x.rank ) consecutiveRanks
-
-
-moveTableauToTableau : Board -> List Card -> Int -> Int -> Board
-moveTableauToTableau board cards fromCol toCol =
-    { board
-        | tableau =
-            board.tableau
-                |> Dict.map
-                    (\k cs ->
-                        if k == fromCol then
-                            cs
-                                |> List.reverse
-                                |> List.drop (List.length cards)
-                                |> List.reverse
-
-                        else if k == toCol then
-                            cs ++ cards
-
-                        else
-                            cs
-                    )
-                |> turnUpEndCards
-    }
-
-
-validateSpareToTableau : Board -> Card -> Int -> Bool
-validateSpareToTableau board card toCol =
-    let
-        destination =
-            ListX.last <| getTableauColumn board.tableau toCol
-    in
-    checkTableauColumnLength board [ card ] toCol
-        && (case destination of
-                Just d ->
-                    cardsLinkTableauBuild card d
-
-                Nothing ->
-                    True
-           )
-
-
-moveSpareToTableau : Board -> Card -> Int -> Board
-moveSpareToTableau board card toCol =
-    { board
-        | tableau =
-            board.tableau
-                |> Dict.map
-                    (\k cs ->
-                        if k == toCol then
-                            cs ++ [ card ]
-
-                        else
-                            cs
-                    )
-        , spare =
-            let
-                removeSelectedSpare =
-                    \c ->
-                        if c == Just card then
-                            Nothing
-
-                        else
-                            c
-            in
-            board.spare
-                |> Tuple.mapBoth removeSelectedSpare removeSelectedSpare
-    }
-
-
-validateSpareToFoundation : Board -> Card -> Int -> Bool
-validateSpareToFoundation board card toFnd =
-    let
-        destination =
-            board.foundations
-                |> ListX.getAt toFnd
-                |> Maybe.withDefault []
-                |> ListX.last
-    in
-    case destination of
-        Just c ->
-            cardsLinkFoundationBuild c card
-
-        Nothing ->
-            card.rank == Ace
-
-
-moveSpareToFoundation : Board -> Card -> Int -> Board
-moveSpareToFoundation board card toFnd =
-    { board
-        | foundations =
-            board.foundations
-                |> List.indexedMap
-                    (\f cs ->
-                        if f == toFnd then
-                            cs ++ [ card ]
-
-                        else
-                            cs
-                    )
-        , spare =
-            let
-                removeSelectedSpare =
-                    \c ->
-                        if c == Just card then
-                            Nothing
-
-                        else
-                            c
-            in
-            board.spare |> Tuple.mapBoth removeSelectedSpare removeSelectedSpare
-    }
-
-
-validateTableauToFoundation : Board -> List Card -> Int -> Int -> Bool
-validateTableauToFoundation board cards fromTab toFnd =
-    let
-        sourceLast =
-            ListX.last cards
-
-        destination =
-            board.foundations
-                |> ListX.getAt toFnd
-                |> Maybe.withDefault []
-                |> ListX.last
-    in
-    case ( sourceLast, destination ) of
-        ( Just sL, Just c ) ->
-            selectionValidFoundationMove (List.reverse cards)
-                && cardsLinkFoundationBuild c sL
-
-        ( Just sL, Nothing ) ->
-            selectionValidFoundationMove (List.reverse cards)
-                && (sL.rank == Ace)
-
-        ( Nothing, _ ) ->
-            False
-
-
-moveTableauToFoundation : Board -> List Card -> Int -> Int -> Board
-moveTableauToFoundation board cards fromTab toFnd =
-    { board
-        | tableau =
-            board.tableau
-                |> Dict.map
-                    (\k cs ->
-                        if k == fromTab then
-                            cs
-                                |> List.reverse
-                                |> List.drop (List.length cards)
-                                |> List.reverse
-
-                        else
-                            cs
-                    )
-                |> turnUpEndCards
-        , foundations =
-            board.foundations
-                |> List.indexedMap
-                    (\foundationIndex cs ->
-                        if foundationIndex == toFnd then
-                            cs ++ List.reverse cards
-
-                        else
-                            cs
-                    )
-    }
 
 
 updateGameState : Model -> Model
@@ -808,14 +419,6 @@ updateGameState model =
             model
 
 
-tableauColumn : Tableau -> Card -> Maybe Int
-tableauColumn tableau card =
-    tableau
-        |> Dict.filter (\_ cs -> List.member card cs)
-        |> Dict.keys
-        |> List.head
-
-
 view : Model -> Html Msg
 view model =
     layout
@@ -824,11 +427,6 @@ view model =
         row [ spacing <| floor (25 * scale), height fill ]
             [ viewMain model
             , viewSidebar model
-            , if showDebug then
-                viewDebug model
-
-              else
-                none
             ]
 
 
@@ -873,7 +471,7 @@ viewFoundations model =
     row [ spacing <| floor (10 * scale), centerX ] <| foundations ++ spacer
 
 
-globalCardAtts : List (Attribute Msg)
+globalCardAtts : List (Attribute msg)
 globalCardAtts =
     [ Border.rounded <| floor (4 * scale)
     , width (cardWidth 1)
@@ -889,13 +487,20 @@ viewFoundation model foundation cards =
                 Spare spareCard ->
                     [ pointer
                     , Events.onClick <|
-                        MoveMsg (MoveSpareToFoundation spareCard foundation)
+                        efRMoveMsg
+                            (Board.MoveSpareToFoundation spareCard
+                                foundation
+                            )
                     ]
 
                 Tableau tabCards tabCol ->
                     [ pointer
                     , Events.onClick <|
-                        MoveMsg (MoveTableauToFoundation tabCards tabCol foundation)
+                        MoveMsg
+                            (Board.MoveTableauToFoundation tabCards
+                                tabCol
+                                foundation
+                            )
                     ]
 
                 _ ->
@@ -923,10 +528,10 @@ viewCardSpace atts =
 viewCard : Model -> Card -> List (Attribute Msg) -> Element Msg
 viewCard model card attr =
     case card.orientation of
-        FaceUp ->
+        Card.FaceUp ->
             viewCardFaceup model card attr
 
-        FaceDown ->
+        Card.FaceDown ->
             viewCardFacedown
 
 
@@ -937,10 +542,10 @@ viewCardFaceup model card attr =
             ++ attr
             ++ [ Background.color <| rgb 1 1 1 ]
         )
-        [ viewCardFaceupHead model card, viewCardFaceupBody card ]
+        [ viewCardFaceupHead model card, Card.viewCardFaceupBody card ]
 
 
-viewCardFaceupHead : Model -> Card -> Element Msg
+viewCardFaceupHead : Model -> Card -> Element msg
 viewCardFaceupHead model card =
     row
         [ padding <| floor (3 * scale)
@@ -953,84 +558,20 @@ viewCardFaceupHead model card =
             , bottomLeft = 0
             , bottomRight = 0
             }
-        , Background.color <| Tuple.second <| suitOutput card.suit
+        , Background.color <| Tuple.second <| Card.suitOutput card.suit
         , Font.color <| rgb 1 1 1
         ]
-        [ viewRank card.rank
+        [ Card.viewRank card.rank
         , el [] <|
             text <|
                 Tuple.first <|
-                    suitOutput card.suit
+                    Card.suitOutput card.suit
         , if cardSelected model.selection card then
             el [ alignRight, Font.color <| rgb 1 1 1 ] <| text "●"
 
           else
             none
         ]
-
-
-suitOutput : Suit -> ( String, Color )
-suitOutput suit =
-    case suit of
-        Hearts ->
-            ( "♥", rgb255 218 87 53 )
-
-        Clubs ->
-            ( "♣", rgb255 114 147 181 )
-
-        Diamonds ->
-            ( "♦", rgb255 242 168 31 )
-
-        Spades ->
-            ( "♠", rgb255 54 55 36 )
-
-        Stars ->
-            ( "★", rgb255 109 167 128 )
-
-
-viewRank : Rank -> Element Msg
-viewRank rank =
-    el [] <|
-        text <|
-            case rank of
-                Ace ->
-                    "A"
-
-                Two ->
-                    "2"
-
-                Three ->
-                    "3"
-
-                Four ->
-                    "4"
-
-                Five ->
-                    "5"
-
-                Six ->
-                    "6"
-
-                Seven ->
-                    "7"
-
-                Eight ->
-                    "8"
-
-                Nine ->
-                    "9"
-
-                Ten ->
-                    "10"
-
-                Jack ->
-                    "J"
-
-                Queen ->
-                    "Q"
-
-                King ->
-                    "K"
 
 
 cardSelected : Selection -> Card -> Bool
@@ -1044,33 +585,6 @@ cardSelected selection card =
 
         NoSelection ->
             False
-
-
-viewCardFaceupBody : Card -> Element Msg
-viewCardFaceupBody card =
-    el
-        [ Font.size <| floor (75 * scale)
-        , centerX
-        , Font.color <| Tuple.second <| suitOutput card.suit
-        , paddingEach
-            { bottom = floor (10 * scale)
-            , left = 0
-            , right = 0
-            , top = 0
-            }
-        ]
-    <|
-        text <|
-            Tuple.first <|
-                suitOutput card.suit
-
-
-viewDebug : Model -> Element Msg
-viewDebug model =
-    paragraph []
-        [ text <| Debug.toString <| model.gameState
-        , text <| Debug.toString <| model.gameType
-        ]
 
 
 viewSidebar : Model -> Element Msg
@@ -1203,7 +717,8 @@ viewTableau model =
 
 viewTableauColumn : Model -> Int -> Element Msg
 viewTableauColumn model colIndex =
-    getTableauColumn model.board.tableau colIndex |> viewColumn model colIndex
+    Board.getTableauColumn model.board.tableau colIndex
+        |> viewColumn model colIndex
 
 
 viewColumn : Model -> Int -> List Card -> Element Msg
@@ -1219,12 +734,17 @@ viewColumn model colIndex cards =
                       else
                         Events.onClick <|
                             MoveMsg
-                                (MoveTableauToTableau tabCards tabCol colIndex)
+                                (Board.MoveTableauToTableau
+                                    tabCards
+                                    tabCol
+                                    colIndex
+                                )
                     ]
 
                 Spare spareCard ->
                     [ pointer
-                    , Events.onClick <| MoveMsg (MoveSpareToTableau spareCard colIndex)
+                    , Events.onClick <|
+                        MoveMsg (Board.MoveSpareToTableau spareCard colIndex)
                     ]
 
                 _ ->
@@ -1255,7 +775,9 @@ viewColumn model colIndex cards =
                     viewTabCard c =
                         viewCard model
                             c
-                            [ pointer, Events.onClick <| SelectMsg (SelectTableau c) ]
+                            [ pointer
+                            , Events.onClick <| SelectMsg (SelectTableau c)
+                            ]
                 in
                 List.map viewTabCard cs
 
@@ -1288,7 +810,7 @@ viewStock model =
         stockSize =
             List.length model.board.stock
     in
-    el [ Events.onClick (MoveMsg MoveStockToTableau), pointer ] <|
+    el [ Events.onClick (MoveMsg Board.MoveStockToTableau), pointer ] <|
         viewStockRow <|
             List.repeat stockSize viewCardFacedown
 
