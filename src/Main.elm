@@ -487,7 +487,7 @@ viewFoundation model foundation cards =
                 Spare spareCard ->
                     [ pointer
                     , Events.onClick <|
-                        efRMoveMsg
+                        MoveMsg
                             (Board.MoveSpareToFoundation spareCard
                                 foundation
                             )
