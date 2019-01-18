@@ -3,6 +3,7 @@ module Main exposing (main)
 import Board exposing (Board)
 import Browser
 import Card exposing (Card)
+import Constants as Const
 import Dict exposing (Dict)
 import Element exposing (..)
 import Element.Background as Background
@@ -10,20 +11,11 @@ import Element.Border as Border
 import Element.Events as Events
 import Element.Font as Font
 import Element.Input as Input
+import GameType exposing (GameType)
 import Html exposing (Html)
 import List.Extra as ListX
 import Random
 import Random.List
-
-
-scale : Float
-scale =
-    1
-
-
-showDebug : Bool
-showDebug =
-    True
 
 
 main =
@@ -37,7 +29,7 @@ main =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( initModel <| getGameType 0, Cmd.none )
+    ( initModel <| GameType.getGameType 0, Cmd.none )
 
 
 type alias Model =
@@ -48,15 +40,6 @@ type alias Model =
     , undoHistory : List Board
     , undoUsed : Bool
     , gameState : GameState
-    }
-
-
-type alias GameType =
-    { name : String
-    , numFoundations : Int
-    , numSuits : Int
-    , numTableauCards : Int
-    , tableauColSizes : List Int
     }
 
 
@@ -90,7 +73,7 @@ type SelectMsg
 initModel : GameType -> Model
 initModel gameType =
     { gameType = gameType
-    , board = boardFromDeck gameType <| deck gameType
+    , board = GameType.boardFromDeck gameType <| GameType.deck gameType
     , selection = NoSelection
     , moves = 0
     , undoHistory = []
@@ -99,100 +82,12 @@ initModel gameType =
     }
 
 
-boardFromDeck : GameType -> List Card -> Board
-boardFromDeck gameType cards =
-    { foundations = List.repeat gameType.numFoundations []
-    , tableau =
-        cards
-            |> List.take gameType.numTableauCards
-            |> buildTableau gameType
-    , spare =
-        let
-            spareCards =
-                cards
-                    |> List.drop gameType.numTableauCards
-                    |> List.take 2
-                    |> List.map Card.turnUp
-        in
-        ( List.head spareCards, ListX.last spareCards )
-    , stock =
-        cards
-            |> List.drop (gameType.numTableauCards + 2)
-            |> ListX.groupsOf 5
-    }
-
-
-buildTableau : GameType -> List Card -> Board.Tableau
-buildTableau gameType cards =
-    let
-        tableauIndices =
-            List.range 0 4
-
-        tableauColSizes =
-            gameType.tableauColSizes
-
-        tableauColumns =
-            ListX.groupsOfVarying tableauColSizes cards
-    in
-    List.map2 Tuple.pair tableauIndices tableauColumns
-        |> Dict.fromList
-        |> Board.turnUpEndCards
-
-
-deck : GameType -> List Card
-deck gameType =
-    let
-        ranks =
-            List.repeat gameType.numFoundations Card.orderedRanks |> List.concat
-
-        suits =
-            ListX.cycle
-                gameType.numFoundations
-                (List.take gameType.numSuits Card.orderedSuits)
-                |> List.repeat 13
-                |> List.concat
-                |> ListX.gatherEquals
-                |> List.concatMap (\( c, cs ) -> c :: cs)
-
-        allFaceDown =
-            List.repeat (gameType.numFoundations * 13) Card.FaceDown
-
-        ids =
-            List.range 1 (gameType.numFoundations * 13)
-    in
-    List.map4 Card ranks suits allFaceDown ids
-
-
-getGameType : Int -> GameType
-getGameType gameTypeIndex =
-    Dict.get gameTypeIndex validGameTypes
-        |> Maybe.withDefault (GameType "1-suit" 4 1 25 [ 5, 5, 5, 5, 5 ])
-
-
-validGameTypes : Dict Int GameType
-validGameTypes =
-    let
-        gameTypes =
-            [ GameType "1-suit" 4 1 25 [ 5, 5, 5, 5, 5 ]
-            , GameType "2-suit" 4 2 25 [ 5, 5, 5, 5, 5 ]
-            , GameType "3-suit" 4 3 25 [ 5, 5, 5, 5, 5 ]
-            , GameType "4-suit" 4 4 25 [ 5, 5, 5, 5, 5 ]
-            , GameType "5-suit" 5 5 28 [ 6, 6, 6, 5, 5 ]
-            , GameType "1-suit Extra" 5 1 28 [ 6, 6, 6, 5, 5 ]
-            ]
-
-        indices =
-            List.range 0 (List.length gameTypes - 1)
-    in
-    List.map2 Tuple.pair indices gameTypes |> Dict.fromList
-
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         NewDeck cards ->
             ( { model
-                | board = boardFromDeck model.gameType cards
+                | board = GameType.boardFromDeck model.gameType cards
               }
             , Cmd.none
             )
@@ -229,7 +124,9 @@ update msg model =
 
         StartGame newGameType ->
             ( initModel newGameType |> updateGameState
-            , Random.generate NewDeck <| Random.List.shuffle <| deck newGameType
+            , Random.generate NewDeck <|
+                Random.List.shuffle <|
+                    GameType.deck newGameType
             )
 
         SelectMsg subMsg ->
@@ -311,10 +208,8 @@ updateMove msg model =
                                 cards
                                 fromCol
                                 toCol
-                        , selection = NoSelection
-                        , moves = model.moves + 1
-                        , undoHistory = model.board :: model.undoHistory
                       }
+                        |> updateModelAfterMove 1
                     , Cmd.none
                     )
 
@@ -326,10 +221,8 @@ updateMove msg model =
                                 (List.reverse cards)
                                 fromCol
                                 toCol
-                        , selection = NoSelection
-                        , moves = model.moves + List.length cards
-                        , undoHistory = model.board :: model.undoHistory
                       }
+                        |> updateModelAfterMove (List.length cards)
                     , Cmd.none
                     )
 
@@ -341,14 +234,9 @@ updateMove msg model =
                 True ->
                     ( { model
                         | board =
-                            Board.moveSpareToTableau
-                                model.board
-                                card
-                                toCol
-                        , selection = NoSelection
-                        , moves = model.moves + 1
-                        , undoHistory = model.board :: model.undoHistory
+                            Board.moveSpareToTableau model.board card toCol
                       }
+                        |> updateModelAfterMove 1
                     , Cmd.none
                     )
 
@@ -360,13 +248,9 @@ updateMove msg model =
                 True ->
                     ( { model
                         | board =
-                            Board.moveSpareToFoundation model.board
-                                card
-                                toFnd
-                        , selection = NoSelection
-                        , moves = model.moves + 1
-                        , undoHistory = model.board :: model.undoHistory
+                            Board.moveSpareToFoundation model.board card toFnd
                       }
+                        |> updateModelAfterMove 1
                     , Cmd.none
                     )
 
@@ -383,15 +267,12 @@ updateMove msg model =
                 True ->
                     ( { model
                         | board =
-                            Board.moveTableauToFoundation
-                                model.board
+                            Board.moveTableauToFoundation model.board
                                 cards
                                 fromTab
                                 toFnd
-                        , selection = NoSelection
-                        , moves = model.moves + List.length cards
-                        , undoHistory = model.board :: model.undoHistory
                       }
+                        |> updateModelAfterMove (List.length cards)
                     , Cmd.none
                     )
 
@@ -399,14 +280,19 @@ updateMove msg model =
                     ( model, Cmd.none )
 
         Board.MoveStockToTableau ->
-            ( { model
-                | board = Board.addCardsFromStock model.board
-                , selection = NoSelection
-                , moves = model.moves + 1
-                , undoHistory = model.board :: model.undoHistory
-              }
+            ( { model | board = Board.addCardsFromStock model.board }
+                |> updateModelAfterMove 1
             , Cmd.none
             )
+
+
+updateModelAfterMove : Int -> Model -> Model
+updateModelAfterMove movesIncrement model =
+    { model
+        | selection = NoSelection
+        , moves = model.moves + movesIncrement
+        , undoHistory = model.board :: model.undoHistory
+    }
 
 
 updateGameState : Model -> Model
@@ -422,9 +308,9 @@ updateGameState model =
 view : Model -> Html Msg
 view model =
     layout
-        [ padding <| floor (10 * scale), Background.color <| rgb255 157 120 85 ]
+        [ padding 10, Background.color <| Const.backgroundColour ]
     <|
-        row [ spacing <| floor (25 * scale), height fill ]
+        row [ spacing 25, height fill ]
             [ viewMain model
             , viewSidebar model
             ]
@@ -433,7 +319,7 @@ view model =
 viewMain : Model -> Element Msg
 viewMain model =
     column
-        [ spacing <| floor (25 * scale)
+        [ spacing 25
         , alignTop
         , width <| cardWidth 6
         ]
@@ -451,7 +337,7 @@ viewMain model =
 
 cardWidth : Float -> Length
 cardWidth cards =
-    px <| floor (68 * scale * cards)
+    px <| floor <| 68 * cards
 
 
 viewFoundations : Model -> Element Msg
@@ -468,12 +354,12 @@ viewFoundations model =
         foundations =
             List.indexedMap (viewFoundation model) model.board.foundations
     in
-    row [ spacing <| floor (10 * scale), centerX ] <| foundations ++ spacer
+    row [ spacing 10, centerX ] <| foundations ++ spacer
 
 
 globalCardAtts : List (Attribute msg)
 globalCardAtts =
-    [ Border.rounded <| floor (4 * scale)
+    [ Border.rounded 4
     , width (cardWidth 1)
     , height (cardHeight 1)
     ]
@@ -519,7 +405,7 @@ viewCardSpace atts =
     el
         (globalCardAtts
             ++ atts
-            ++ [ Background.color <| rgba 0 0 0 0.25 ]
+            ++ [ Background.color <| Const.cardSpaceBackground ]
         )
     <|
         none
@@ -548,13 +434,13 @@ viewCardFaceup model card attr =
 viewCardFaceupHead : Model -> Card -> Element msg
 viewCardFaceupHead model card =
     row
-        [ padding <| floor (3 * scale)
+        [ padding 3
         , width fill
-        , Font.size <| floor (20 * scale)
-        , spacing <| floor (3 * scale)
+        , Font.size 20
+        , spacing 3
         , Border.roundEach
-            { topLeft = floor (4 * scale)
-            , topRight = floor (4 * scale)
+            { topLeft = 4
+            , topRight = 4
             , bottomLeft = 0
             , bottomRight = 0
             }
@@ -591,11 +477,11 @@ viewSidebar : Model -> Element Msg
 viewSidebar model =
     let
         sidebarHeader =
-            el [ centerX, Font.size <| floor (22 * scale), Font.bold ] <|
+            el [ centerX, Font.size 22, Font.bold ] <|
                 text "FlipFlop"
 
         sidebarBurger =
-            Input.button [ centerX, Font.size <| floor (25 * scale) ]
+            Input.button [ centerX, Font.size 25 ]
                 { onPress = Nothing, label = text "≡" }
     in
     column sidebarAtts <|
@@ -625,13 +511,13 @@ viewSidebar model =
 
 sidebarAtts : List (Attribute Msg)
 sidebarAtts =
-    [ spacing <| floor (25 * scale)
+    [ spacing 25
     , alignTop
     , width <| cardWidth 2.5
     , height fill
-    , padding <| floor (10 * scale)
+    , padding 10
     , Background.color <| rgba 0 0 0 0.25
-    , Font.size <| floor (15 * scale)
+    , Font.size 15
     , Font.color <| rgb 1 1 1
     ]
 
@@ -641,12 +527,12 @@ viewSelectGame =
     let
         newGameLink gameType =
             Input.button [ centerX ]
-                { onPress = Just (StartGame <| getGameType gameType)
-                , label = text <| .name <| getGameType gameType
+                { onPress = Just (StartGame <| GameType.getGameType gameType)
+                , label = text <| .name <| GameType.getGameType gameType
                 }
     in
-    column [ spacing <| floor (20 * scale), centerX ] <|
-        List.map newGameLink (Dict.keys validGameTypes)
+    column [ spacing 20, centerX ] <|
+        List.map newGameLink (Dict.keys GameType.validGameTypes)
 
 
 viewInfo : Model -> Element Msg
@@ -659,13 +545,13 @@ viewInfo model =
             model.gameType.numFoundations * 13 |> toFloat
     in
     column
-        [ Font.size <| floor (15 * scale)
-        , spacing <| floor (10 * scale)
+        [ Font.size 15
+        , spacing 10
         , Font.color <| rgb 1 1 1
         , centerX
         , height <| cardHeight 1.25
         ]
-        [ el [ centerX, Font.size <| floor (18 * scale), Font.bold ] <|
+        [ el [ centerX, Font.size 18, Font.bold ] <|
             text <|
                 model.gameType.name
         , viewProgress <| numFoundationCards / numTargetCards
@@ -709,7 +595,7 @@ viewRestartButton =
 
 viewTableau : Model -> Element Msg
 viewTableau model =
-    row [ spacing <| floor (10 * scale), centerX ] <|
+    row [ spacing 10, centerX ] <|
         List.map
             (viewTableauColumn model)
             (Dict.keys model.board.tableau)
@@ -752,7 +638,7 @@ viewColumn model colIndex cards =
 
         warningAtts =
             if List.length cards >= 20 then
-                [ Border.color <| rgb255 250 100 42
+                [ Border.color Const.columnWarningColour
                 , Border.widthEach { bottom = 5, top = 0, right = 0, left = 0 }
                 , Border.solid
                 ]
@@ -761,7 +647,7 @@ viewColumn model colIndex cards =
                 []
     in
     column
-        ([ alignTop, spacing -(floor <| 81 * scale) ]
+        ([ alignTop, spacing -81 ]
             ++ selAtts
             ++ warningAtts
         )
@@ -798,7 +684,7 @@ viewSpare model =
         selectAttr =
             [ Events.onClick SelectSpare, pointer ]
     in
-    row [ spacing <| floor (10 * scale) ]
+    row [ spacing 10 ]
         [ viewSingleSpare <| Tuple.first model.board.spare
         , viewSingleSpare <| Tuple.second model.board.spare
         ]
@@ -841,9 +727,9 @@ viewCardFacedown =
         (globalCardAtts ++ [ Background.color <| rgb 1 1 1 ])
     <|
         el
-            [ Border.rounded <| floor (4 * scale / innerScale)
-            , width <| px <| floor (68 * scale / innerScale)
-            , height <| px <| floor (105 * scale / innerScale)
+            [ Border.rounded <| floor (4 / innerScale)
+            , width <| px <| floor (68 / innerScale)
+            , height <| px <| floor (105 / innerScale)
             , Background.color <| rgb255 44 49 64
             , centerX
             , centerY
@@ -854,14 +740,9 @@ viewCardFacedown =
 
 cardHeight : Float -> Length
 cardHeight cards =
-    px <| floor (105 * scale * cards)
+    px <| floor (105 * cards)
 
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.none
-
-
-colWarningColumn : Color
-colWarningColumn =
-    rgb255 250 100 42

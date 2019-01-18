@@ -11,15 +11,16 @@ module Card exposing
     , groupCardsTableauMove
     , orderedRanks
     , orderedSuits
-    , selectFromCardInColumn
     , selectionValidFoundationMove
     , selectionValidTableauMove
     , suitOutput
+    , tailFromCard
     , turnUp
     , viewCardFaceupBody
     , viewRank
     )
 
+import Constants as Const
 import Element exposing (..)
 import Element.Font as Font
 import List.Extra as ListX
@@ -91,40 +92,57 @@ consecutiveRanks =
     ListX.zip orderedRanks (List.drop 1 orderedRanks)
 
 
-suitOutput : Suit -> ( String, Color )
-suitOutput suit =
-    case suit of
-        Hearts ->
-            ( "♥", rgb255 218 87 53 )
-
-        Clubs ->
-            ( "♣", rgb255 114 147 181 )
-
-        Diamonds ->
-            ( "♦", rgb255 242 168 31 )
-
-        Spades ->
-            ( "♠", rgb255 54 55 36 )
-
-        Stars ->
-            ( "★", rgb255 109 167 128 )
-
-
-selectFromCardInColumn : Card -> List Card -> List Card
-selectFromCardInColumn card column =
-    case column of
+tailFromCard : Card -> List Card -> List Card
+tailFromCard targetCard cards =
+    case cards of
         [] ->
             []
 
-        [ c ] ->
-            if c == card then
-                [ c ]
+        x :: xs ->
+            if x == targetCard then
+                cards
 
             else
-                []
+                tailFromCard targetCard xs
 
-        cs ->
-            ListX.dropWhile (\c -> c /= card) cs
+
+
+-- Selection valid checks
+
+
+selectionValidTableauMove : List Card -> Bool
+selectionValidTableauMove cards =
+    (List.length <| groupCardsTableauMove cards) == 1
+
+
+selectionValidFoundationMove : List Card -> Bool
+selectionValidFoundationMove cards =
+    (List.length <| groupCardsFoundationMove cards) == 1
+
+
+
+-- Group cards
+
+
+groupCardsToMove : (Card -> Card -> Bool) -> List Card -> List (List Card)
+groupCardsToMove cardsLink cards =
+    cards
+        |> ListX.groupWhile cardsLink
+        |> List.map (\( x, xs ) -> x :: xs)
+
+
+groupCardsTableauMove : List Card -> List (List Card)
+groupCardsTableauMove cards =
+    groupCardsToMove cardsLinkTableauMove cards
+
+
+groupCardsFoundationMove : List Card -> List (List Card)
+groupCardsFoundationMove cards =
+    groupCardsToMove cardsLinkFoundationBuild cards
+
+
+
+-- Cards link checks
 
 
 cardsLinkTableauBuild : Card -> Card -> Bool
@@ -133,42 +151,19 @@ cardsLinkTableauBuild x y =
         || List.member ( y.rank, x.rank ) consecutiveRanks
 
 
-selectionValidTableauMove : List Card -> Bool
-selectionValidTableauMove cards =
-    (List.length <| groupCardsTableauMove cards) == 1
-
-
-groupCardsTableauMove : List Card -> List (List Card)
-groupCardsTableauMove cards =
-    cards
-        |> ListX.groupWhile cardsLinkTableauMove
-        |> List.map (\( x, xs ) -> x :: xs)
-
-
 cardsLinkTableauMove : Card -> Card -> Bool
 cardsLinkTableauMove x y =
-    (List.member ( x.rank, y.rank ) consecutiveRanks
-        || List.member ( y.rank, x.rank ) consecutiveRanks
-    )
-        && (x.suit == y.suit)
-
-
-selectionValidFoundationMove : List Card -> Bool
-selectionValidFoundationMove cards =
-    (List.length <| groupCardsFoundationMove cards) == 1
-
-
-groupCardsFoundationMove : List Card -> List (List Card)
-groupCardsFoundationMove cards =
-    cards
-        |> ListX.groupWhile cardsLinkFoundationBuild
-        |> List.map (\( x, xs ) -> x :: xs)
+    cardsLinkTableauBuild x y && (x.suit == y.suit)
 
 
 cardsLinkFoundationBuild : Card -> Card -> Bool
 cardsLinkFoundationBuild x y =
     List.member ( x.rank, y.rank ) consecutiveRanks
         && (x.suit == y.suit)
+
+
+
+-- View card
 
 
 viewRank : Rank -> Element msg
@@ -214,6 +209,25 @@ viewRank rank =
 
                 King ->
                     "K"
+
+
+suitOutput : Suit -> ( String, Color )
+suitOutput suit =
+    case suit of
+        Hearts ->
+            ( "♥", Const.heartsColour )
+
+        Clubs ->
+            ( "♣", Const.clubsColour )
+
+        Diamonds ->
+            ( "♦", Const.diamondsColour )
+
+        Spades ->
+            ( "♠", Const.spadesColour )
+
+        Stars ->
+            ( "★", Const.starsColour )
 
 
 viewCardFaceupBody : Card -> Element msg

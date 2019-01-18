@@ -62,14 +62,11 @@ addCardsFromStock board =
     { board
         | tableau =
             let
-                tableauList : List ( Int, List Card )
                 tableauList =
                     Dict.toList board.tableau
 
-                stockList : List Card
                 stockList =
-                    List.take 1 board.stock
-                        |> List.concat
+                    List.take 1 board.stock |> List.concat
             in
             List.map2
                 (\( k, tabCards ) stockCard ->
@@ -89,7 +86,7 @@ selectFromCardInTableau card tableau =
         (\_ column tail ->
             case tail of
                 [] ->
-                    Card.selectFromCardInColumn card column
+                    Card.tailFromCard card column
 
                 _ ->
                     tail
