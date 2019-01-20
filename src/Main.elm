@@ -86,9 +86,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         NewDeck cards ->
-            ( { model
-                | board = GameType.boardFromDeck model.gameType cards
-              }
+            ( { model | board = GameType.boardFromDeck model.gameType cards }
             , Cmd.none
             )
 
@@ -188,97 +186,69 @@ updateMove : Board.MoveMsg -> Model -> ( Model, Cmd Msg )
 updateMove msg model =
     case msg of
         Board.MoveTableauToTableau cards fromCol toCol ->
-            case
-                Board.validateTableauToTableau
-                    model.board
-                    cards
-                    fromCol
-                    toCol
-            of
-                ( True, Just False ) ->
-                    ( { model
-                        | board =
-                            Board.moveTableauToTableau
-                                model.board
-                                cards
-                                fromCol
-                                toCol
-                      }
-                        |> updateModelAfterMove 1
-                    , Cmd.none
-                    )
-
-                ( True, Just True ) ->
-                    ( { model
-                        | board =
-                            Board.moveTableauToTableau
-                                model.board
-                                (List.reverse cards)
-                                fromCol
-                                toCol
-                      }
-                        |> updateModelAfterMove (List.length cards)
-                    , Cmd.none
-                    )
-
-                ( _, _ ) ->
-                    ( model, Cmd.none )
+            ( updateModelTabToTab model cards fromCol toCol, Cmd.none )
 
         Board.MoveSpareToTableau card toCol ->
-            case Board.validateSpareToTableau model.board card toCol of
-                True ->
-                    ( { model
-                        | board =
-                            Board.moveSpareToTableau model.board card toCol
-                      }
-                        |> updateModelAfterMove 1
-                    , Cmd.none
-                    )
+            if Board.validSprToTab model.board card toCol then
+                ( { model | board = Board.moveSprToTab model.board card toCol }
+                    |> updateModelAfterMove 1
+                , Cmd.none
+                )
 
-                False ->
-                    ( model, Cmd.none )
+            else
+                ( model, Cmd.none )
 
         Board.MoveSpareToFoundation card toFnd ->
-            case Board.validateSpareToFoundation model.board card toFnd of
-                True ->
-                    ( { model
-                        | board =
-                            Board.moveSpareToFoundation model.board card toFnd
-                      }
-                        |> updateModelAfterMove 1
-                    , Cmd.none
-                    )
+            if Board.validSprToFnd model.board card toFnd then
+                ( { model | board = Board.moveSprToFnd model.board card toFnd }
+                    |> updateModelAfterMove 1
+                , Cmd.none
+                )
 
-                False ->
-                    ( model, Cmd.none )
+            else
+                ( model, Cmd.none )
 
         Board.MoveTableauToFoundation cards fromTab toFnd ->
-            case
-                Board.validateTableauToFoundation model.board
-                    cards
-                    fromTab
-                    toFnd
-            of
-                True ->
-                    ( { model
-                        | board =
-                            Board.moveTableauToFoundation model.board
-                                cards
-                                fromTab
-                                toFnd
-                      }
-                        |> updateModelAfterMove (List.length cards)
-                    , Cmd.none
-                    )
+            if Board.validTabToFnd model.board cards fromTab toFnd then
+                ( { model
+                    | board = Board.moveTabToFnd model.board cards fromTab toFnd
+                  }
+                    |> updateModelAfterMove (List.length cards)
+                , Cmd.none
+                )
 
-                False ->
-                    ( model, Cmd.none )
+            else
+                ( model, Cmd.none )
 
         Board.MoveStockToTableau ->
             ( { model | board = Board.addCardsFromStock model.board }
                 |> updateModelAfterMove 1
             , Cmd.none
             )
+
+
+updateModelTabToTab : Model -> List Card -> Int -> Int -> Model
+updateModelTabToTab model cards fromCol toCol =
+    case Board.validTabToTab model.board cards fromCol toCol of
+        ( True, Just False ) ->
+            { model
+                | board =
+                    Board.moveTabToTab model.board cards fromCol toCol
+            }
+                |> updateModelAfterMove 1
+
+        ( True, Just True ) ->
+            { model
+                | board =
+                    Board.moveTabToTab model.board
+                        (List.reverse cards)
+                        fromCol
+                        toCol
+            }
+                |> updateModelAfterMove (List.length cards)
+
+        _ ->
+            model
 
 
 updateModelAfterMove : Int -> Model -> Model

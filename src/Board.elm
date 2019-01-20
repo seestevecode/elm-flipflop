@@ -1,22 +1,4 @@
-module Board exposing
-    ( Board
-    , MoveMsg(..)
-    , Tableau
-    , addCardsFromStock
-    , checkTableauColumnLength
-    , getTableauColumn
-    , moveSpareToFoundation
-    , moveSpareToTableau
-    , moveTableauToFoundation
-    , moveTableauToTableau
-    , selectFromCardInTableau
-    , tableauColumn
-    , turnUpEndCards
-    , validateSpareToFoundation
-    , validateSpareToTableau
-    , validateTableauToFoundation
-    , validateTableauToTableau
-    )
+module Board exposing (Board, MoveMsg(..), Tableau, addCardsFromStock, checkTableauColumnLength, getTableauColumn, moveSprToFnd, moveSprToTab, moveTabToFnd, moveTabToTab, selectFromCardInTableau, tableauColumn, turnUpEndCards, validSprToFnd, validSprToTab, validTabToFnd, validTabToTab)
 
 import Card exposing (Card)
 import Dict exposing (Dict)
@@ -107,8 +89,8 @@ getTableauColumn tableau colIndex =
 -- Validate board moves
 
 
-validateSpareToTableau : Board -> Card -> Int -> Bool
-validateSpareToTableau board card toCol =
+validSprToTab : Board -> Card -> Int -> Bool
+validSprToTab board card toCol =
     let
         destination =
             ListX.last <| getTableauColumn board.tableau toCol
@@ -123,13 +105,8 @@ validateSpareToTableau board card toCol =
            )
 
 
-validateTableauToTableau :
-    Board
-    -> List Card
-    -> Int
-    -> Int
-    -> ( Bool, Maybe Bool )
-validateTableauToTableau board cards fromCol toCol =
+validTabToTab : Board -> List Card -> Int -> Int -> ( Bool, Maybe Bool )
+validTabToTab board cards fromCol toCol =
     let
         destination =
             ListX.last <| getTableauColumn board.tableau toCol
@@ -157,8 +134,8 @@ validateTableauToTableau board cards fromCol toCol =
             ( False, Nothing )
 
 
-validateSpareToFoundation : Board -> Card -> Int -> Bool
-validateSpareToFoundation board card toFnd =
+validSprToFnd : Board -> Card -> Int -> Bool
+validSprToFnd board card toFnd =
     let
         destination =
             board.foundations
@@ -174,19 +151,16 @@ validateSpareToFoundation board card toFnd =
             card.rank == Card.Ace
 
 
-validateTableauToFoundation : Board -> List Card -> Int -> Int -> Bool
-validateTableauToFoundation board cards fromTab toFnd =
+validTabToFnd : Board -> List Card -> Int -> Int -> Bool
+validTabToFnd board cards fromTab toFnd =
     let
-        sourceLast =
-            ListX.last cards
-
         destination =
             board.foundations
                 |> ListX.getAt toFnd
                 |> Maybe.withDefault []
                 |> ListX.last
     in
-    case ( sourceLast, destination ) of
+    case ( ListX.last cards, destination ) of
         ( Just sL, Just c ) ->
             Card.selectionValidFoundationMove (List.reverse cards)
                 && Card.cardsLinkFoundationBuild c sL
@@ -208,8 +182,8 @@ checkTableauColumnLength board cards toCol =
 -- Board Moves
 
 
-moveSpareToTableau : Board -> Card -> Int -> Board
-moveSpareToTableau board card toCol =
+moveSprToTab : Board -> Card -> Int -> Board
+moveSprToTab board card toCol =
     { board
         | tableau =
             board.tableau
@@ -236,8 +210,8 @@ moveSpareToTableau board card toCol =
     }
 
 
-moveTableauToTableau : Board -> List Card -> Int -> Int -> Board
-moveTableauToTableau board cards fromCol toCol =
+moveTabToTab : Board -> List Card -> Int -> Int -> Board
+moveTabToTab board cards fromCol toCol =
     { board
         | tableau =
             board.tableau
@@ -259,8 +233,8 @@ moveTableauToTableau board cards fromCol toCol =
     }
 
 
-moveSpareToFoundation : Board -> Card -> Int -> Board
-moveSpareToFoundation board card toFnd =
+moveSprToFnd : Board -> Card -> Int -> Board
+moveSprToFnd board card toFnd =
     { board
         | foundations =
             board.foundations
@@ -286,8 +260,8 @@ moveSpareToFoundation board card toFnd =
     }
 
 
-moveTableauToFoundation : Board -> List Card -> Int -> Int -> Board
-moveTableauToFoundation board cards fromTab toFnd =
+moveTabToFnd : Board -> List Card -> Int -> Int -> Board
+moveTabToFnd board cards fromTab toFnd =
     { board
         | tableau =
             board.tableau
