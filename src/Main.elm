@@ -3,7 +3,6 @@ module Main exposing (main)
 import Board exposing (Board)
 import Browser
 import Card exposing (Card)
-import Constants as Const
 import Dict exposing (Dict)
 import Element exposing (..)
 import Element.Background as Background
@@ -276,17 +275,15 @@ updateGameState model =
 view : Model -> Html Msg
 view model =
     layout
-        [ padding 10, Background.color <| Const.backgroundColour ]
+        [ padding 10, Background.color <| backgroundColour ]
     <|
-        row [ spacing 25, height fill ]
-            [ viewMain model
-            , viewSidebar model
-            ]
+        row [ centerX, spacing 25, height fill ]
+            [ viewMain model, viewSidebar model ]
 
 
 viewMain : Model -> Element Msg
 viewMain model =
-    column [ spacing 25, alignTop, width <| cardWidth 6 ] <|
+    column [ spacing 25, alignTop, width <| px <| Card.cardWidth * 6 ] <|
         case model.gameState of
             NewGame ->
                 [ none ]
@@ -298,18 +295,13 @@ viewMain model =
                 [ none ]
 
 
-cardWidth : Float -> Length
-cardWidth cards =
-    px <| floor <| 68 * cards
-
-
 viewFoundations : Model -> Element Msg
 viewFoundations model =
     let
         spacer =
             case model.gameType.numFoundations of
                 4 ->
-                    [ el globalCardAtts none ]
+                    [ el Card.globalCardAtts none ]
 
                 _ ->
                     [ none ]
@@ -320,19 +312,11 @@ viewFoundations model =
     row [ spacing 10, centerX ] <| foundations ++ spacer
 
 
-globalCardAtts : List (Attribute msg)
-globalCardAtts =
-    [ Border.rounded 4
-    , width (cardWidth 1)
-    , height (cardHeight 1)
-    ]
-
-
 viewFoundation : Model -> Int -> List Card -> Element Msg
 viewFoundation model foundation cards =
     case List.reverse cards of
         [] ->
-            viewCardSpace <|
+            Card.viewCardSpace <|
                 foundationSelectionAtts model.selection foundation
 
         last :: _ ->
@@ -360,17 +344,6 @@ foundationSelectionAtts selection foundation =
             []
 
 
-viewCardSpace : List (Attribute Msg) -> Element Msg
-viewCardSpace atts =
-    el
-        (globalCardAtts
-            ++ atts
-            ++ [ Background.color <| Const.cardSpaceBackground ]
-        )
-    <|
-        none
-
-
 viewCard : Model -> Card -> List (Attribute Msg) -> Element Msg
 viewCard model card attr =
     case card.orientation of
@@ -378,16 +351,13 @@ viewCard model card attr =
             viewCardFaceup model card attr
 
         Card.FaceDown ->
-            viewCardFacedown
+            Card.viewCardFacedown
 
 
 viewCardFaceup : Model -> Card -> List (Attribute Msg) -> Element Msg
 viewCardFaceup model card attr =
     column
-        (globalCardAtts
-            ++ attr
-            ++ [ Background.color <| rgb 1 1 1 ]
-        )
+        (Card.globalCardAtts ++ attr ++ [ Background.color <| rgb 1 1 1 ])
         [ viewCardFaceupHead model card, Card.viewCardFaceupBody card ]
 
 
@@ -399,8 +369,8 @@ viewCardFaceupHead model card =
         , Font.size 20
         , spacing 3
         , Border.roundEach
-            { topLeft = 4
-            , topRight = 4
+            { topLeft = Card.cardCornerRound
+            , topRight = Card.cardCornerRound
             , bottomLeft = 0
             , bottomRight = 0
             }
@@ -408,10 +378,7 @@ viewCardFaceupHead model card =
         , Font.color <| rgb 1 1 1
         ]
         [ Card.viewRank card.rank
-        , el [] <|
-            text <|
-                Tuple.first <|
-                    Card.suitOutput card.suit
+        , el [] <| text <| Tuple.first <| Card.suitOutput card.suit
         , if cardSelected model.selection card then
             el [ alignRight, Font.color <| rgb 1 1 1 ] <| text "●"
 
@@ -437,8 +404,7 @@ viewSidebar : Model -> Element Msg
 viewSidebar model =
     let
         sidebarHeader =
-            el [ centerX, Font.size 22, Font.bold ] <|
-                text "FlipFlop"
+            el [ centerX, Font.size 22, Font.bold ] <| text "FlipFlop"
 
         sidebarBurger =
             Input.button [ centerX, Font.size 25 ]
@@ -448,7 +414,7 @@ viewSidebar model =
         case model.gameState of
             NewGame ->
                 [ sidebarHeader
-                , el [] <| text "New Game"
+                , el [ centerX ] <| text "New Game"
                 , sidebarBurger
                 , viewSelectGame
                 ]
@@ -458,7 +424,7 @@ viewSidebar model =
                 , viewInfo model
                 , sidebarBurger
                 , viewSpare model
-                , viewStock model
+                , viewStock <| List.length model.board.stock
                 ]
 
             GameOver ->
@@ -473,12 +439,12 @@ sidebarAtts : List (Attribute Msg)
 sidebarAtts =
     [ spacing 25
     , alignTop
-    , width <| cardWidth 2.5
+    , width <| px <| floor <| toFloat Card.cardWidth * 2.5
     , height fill
     , padding 10
     , Background.color <| rgba 0 0 0 0.25
     , Font.size 15
-    , Font.color <| rgb 1 1 1
+    , Font.color sidebarFontColour
     ]
 
 
@@ -503,32 +469,33 @@ viewInfo model =
 
         numTargetCards =
             model.gameType.numFoundations * 13 |> toFloat
-    in
-    column
-        [ Font.size 15
-        , spacing 10
-        , Font.color <| rgb 1 1 1
-        , centerX
-        , height <| cardHeight 1.25
-        ]
-        [ el [ centerX, Font.size 18, Font.bold ] <|
-            text <|
-                model.gameType.name
-        , viewProgress <| numFoundationCards / numTargetCards
-        , el [ centerX ] <|
-            text <|
-                case model.moves of
-                    1 ->
-                        "1 move"
 
-                    n ->
-                        String.fromInt n ++ " moves"
-        , el [ centerX, height (fill |> minimum 20) ] <|
+        movesText =
+            if model.moves == 1 then
+                "1 move"
+
+            else
+                String.fromInt model.moves ++ " moves"
+
+        undoTextEl =
             if model.undoUsed then
                 text "Undo used"
 
             else
                 none
+    in
+    column
+        [ Font.size 15
+        , spacing 10
+        , centerX
+        , height <| px <| floor <| toFloat Card.cardHeight * 1.25
+        ]
+        [ el [ centerX, Font.size 18, Font.bold ] <|
+            text <|
+                model.gameType.name
+        , viewProgress <| numFoundationCards / numTargetCards
+        , el [ centerX ] <| text <| movesText
+        , el [ centerX, height (fill |> minimum 20) ] <| undoTextEl
         ]
 
 
@@ -543,8 +510,7 @@ viewProgress progress =
 
 viewUndoButton : Element Msg
 viewUndoButton =
-    Input.button [ alignLeft ]
-        { onPress = Just Undo, label = text "Undo" }
+    Input.button [ alignLeft ] { onPress = Just Undo, label = text "Undo" }
 
 
 viewRestartButton : Element Msg
@@ -556,9 +522,7 @@ viewRestartButton =
 viewTableau : Model -> Element Msg
 viewTableau model =
     row [ spacing 10, centerX ] <|
-        List.map
-            (viewTableauColumn model)
-            (Dict.keys model.board.tableau)
+        List.map (viewTableauColumn model) (Dict.keys model.board.tableau)
 
 
 viewTableauColumn : Model -> Int -> Element Msg
@@ -572,12 +536,12 @@ viewColumn model colIndex cards =
     column
         ([ alignTop, spacing -81 ]
             ++ columnSelectionAtts model.selection colIndex
-            ++ columnWarningAtts cards
+            ++ Board.columnWarningAtts cards
         )
     <|
         case cards of
             [] ->
-                [ viewCardSpace [] ]
+                [ Card.viewCardSpace [] ]
 
             cs ->
                 let
@@ -615,25 +579,13 @@ columnSelectionAtts selection colIndex =
             []
 
 
-columnWarningAtts : List Card -> List (Attribute msg)
-columnWarningAtts cards =
-    if List.length cards >= 20 then
-        [ Border.color Const.columnWarningColour
-        , Border.widthEach { bottom = 5, top = 0, right = 0, left = 0 }
-        , Border.solid
-        ]
-
-    else
-        []
-
-
 viewSpare : Model -> Element Msg
 viewSpare model =
     let
         viewSingleSpare spare =
             case spare of
                 Nothing ->
-                    el globalCardAtts none
+                    el Card.globalCardAtts none
 
                 Just s ->
                     viewCard model
@@ -649,54 +601,34 @@ viewSpare model =
         ]
 
 
-viewStock : Model -> Element Msg
-viewStock model =
-    let
-        stockSize =
-            List.length model.board.stock
-    in
-    el [ Events.onClick (MoveMsg Board.MoveStockToTableau), pointer ] <|
-        viewStockRow <|
-            List.repeat stockSize viewCardFacedown
-
-
-viewStockRow : List (Element Msg) -> Element Msg
-viewStockRow els =
-    el [] <|
-        case els of
-            [] ->
-                none
-
-            first :: rest ->
-                el [ inFront <| viewStockRow rest, moveRight 15 ] <| first
-
-
-viewCardFacedown : Element Msg
-viewCardFacedown =
-    let
-        innerScale =
-            1.05
-    in
-    el
-        (globalCardAtts ++ [ Background.color <| rgb 1 1 1 ])
-    <|
-        el
-            [ Border.rounded <| floor (4 / innerScale)
-            , width <| px <| floor (68 / innerScale)
-            , height <| px <| floor (105 / innerScale)
-            , Background.color <| rgb255 44 49 64
-            , centerX
-            , centerY
-            ]
-        <|
+viewStock : Int -> Element Msg
+viewStock stockGroups =
+    case stockGroups of
+        0 ->
             none
 
-
-cardHeight : Float -> Length
-cardHeight cards =
-    px <| floor (105 * cards)
+        numGroups ->
+            el [ pointer, Events.onClick <| MoveMsg Board.MoveStockToTableau ]
+                Card.viewCardFacedown
+                :: List.repeat (numGroups - 1) Card.viewCardFacedown
+                |> List.reverse
+                |> row [ alignLeft, spacing -50 ]
 
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.none
+
+
+
+-- Constants
+
+
+backgroundColour : Color
+backgroundColour =
+    rgb255 157 120 85
+
+
+sidebarFontColour : Color
+sidebarFontColour =
+    rgb 1 1 1

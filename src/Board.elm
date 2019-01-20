@@ -4,6 +4,8 @@ module Board exposing
     , Tableau
     , addCardsFromStock
     , checkTableauColumnLength
+    , columnWarningAtts
+    , columnWarningColour
     , getTableauColumn
     , moveSprToFnd
     , moveSprToTab
@@ -20,6 +22,8 @@ module Board exposing
 
 import Card exposing (Card)
 import Dict exposing (Dict)
+import Element exposing (..)
+import Element.Border as Border
 import List.Extra as ListX
 
 
@@ -314,3 +318,25 @@ tableauColumn tableau card =
         |> Dict.filter (\_ cs -> List.member card cs)
         |> Dict.keys
         |> List.head
+
+
+columnWarningAtts : List Card -> List (Attribute msg)
+columnWarningAtts cards =
+    if List.length cards >= 20 then
+        [ Border.color columnWarningColour
+        , Border.widthEach
+            { bottom = Card.cardCornerRound, top = 0, right = 0, left = 0 }
+        , Border.solid
+        ]
+
+    else
+        []
+
+
+
+-- Constants
+
+
+columnWarningColour : Color
+columnWarningColour =
+    rgb255 250 100 42

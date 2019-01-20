@@ -3,25 +3,42 @@ module Card exposing
     , Orientation(..)
     , Rank(..)
     , Suit(..)
+    , bodyFontSize
+    , bodyPadding
+    , cardBackColour
+    , cardCornerRound
+    , cardHeight
+    , cardSpaceColour
+    , cardWidth
     , cardsLinkFoundationBuild
     , cardsLinkTableauBuild
     , cardsLinkTableauMove
+    , clubsColour
     , consecutiveRanks
+    , diamondsColour
+    , globalCardAtts
     , groupCardsFoundationMove
     , groupCardsTableauMove
+    , groupCardsToMove
+    , heartsColour
     , orderedRanks
     , orderedSuits
     , selectionValidFoundationMove
     , selectionValidTableauMove
+    , spadesColour
+    , starsColour
     , suitOutput
     , tailFromCard
     , turnUp
+    , viewCardFacedown
     , viewCardFaceupBody
+    , viewCardSpace
     , viewRank
     )
 
-import Constants as Const
 import Element exposing (..)
+import Element.Background as Background
+import Element.Border as Border
 import Element.Font as Font
 import List.Extra as ListX
 
@@ -215,35 +232,127 @@ suitOutput : Suit -> ( String, Color )
 suitOutput suit =
     case suit of
         Hearts ->
-            ( "♥", Const.heartsColour )
+            ( "♥", heartsColour )
 
         Clubs ->
-            ( "♣", Const.clubsColour )
+            ( "♣", clubsColour )
 
         Diamonds ->
-            ( "♦", Const.diamondsColour )
+            ( "♦", diamondsColour )
 
         Spades ->
-            ( "♠", Const.spadesColour )
+            ( "♠", spadesColour )
 
         Stars ->
-            ( "★", Const.starsColour )
+            ( "★", starsColour )
 
 
 viewCardFaceupBody : Card -> Element msg
 viewCardFaceupBody card =
     el
-        [ Font.size <| floor 75
+        [ Font.size bodyFontSize
         , centerX
         , Font.color <| Tuple.second <| suitOutput card.suit
-        , paddingEach
-            { bottom = floor 10
-            , left = 0
-            , right = 0
-            , top = 0
-            }
+        , paddingEach { bottom = bodyPadding, left = 0, right = 0, top = 0 }
         ]
     <|
         text <|
             Tuple.first <|
                 suitOutput card.suit
+
+
+viewCardFacedown : Element msg
+viewCardFacedown =
+    let
+        innerScale =
+            1.05
+    in
+    el ((Background.color <| rgb 1 1 1) :: globalCardAtts) <|
+        el
+            [ Border.rounded <| floor <| toFloat cardCornerRound / innerScale
+            , width <| px <| floor <| toFloat cardWidth / innerScale
+            , height <| px <| floor <| toFloat cardHeight / innerScale
+            , Background.color cardBackColour
+            , centerX
+            , centerY
+            ]
+        <|
+            none
+
+
+viewCardSpace : List (Attribute msg) -> Element msg
+viewCardSpace atts =
+    el ([ Background.color <| cardSpaceColour ] ++ globalCardAtts ++ atts) <|
+        none
+
+
+globalCardAtts : List (Attribute msg)
+globalCardAtts =
+    [ Border.rounded cardCornerRound
+    , width <| px cardWidth
+    , height <| px cardHeight
+    ]
+
+
+
+-- Constants
+
+
+bodyFontSize : Int
+bodyFontSize =
+    75
+
+
+bodyPadding : Int
+bodyPadding =
+    10
+
+
+heartsColour : Color
+heartsColour =
+    rgb255 218 87 53
+
+
+clubsColour : Color
+clubsColour =
+    rgb255 114 147 181
+
+
+diamondsColour : Color
+diamondsColour =
+    rgb255 242 168 31
+
+
+spadesColour : Color
+spadesColour =
+    rgb255 54 55 36
+
+
+starsColour : Color
+starsColour =
+    rgb255 109 167 128
+
+
+cardBackColour : Color
+cardBackColour =
+    rgb255 44 49 64
+
+
+cardCornerRound : Int
+cardCornerRound =
+    4
+
+
+cardHeight : Int
+cardHeight =
+    105
+
+
+cardWidth : Int
+cardWidth =
+    68
+
+
+cardSpaceColour : Color
+cardSpaceColour =
+    rgba 0 0 0 0.25
