@@ -260,6 +260,7 @@ updateModelAfterMove movesIncrement model =
         , moves = model.moves + movesIncrement
         , undoHistory = model.board :: model.undoHistory
     }
+        |> updateGameState
 
 
 updateGameState : Model -> Model
@@ -268,7 +269,17 @@ updateGameState model =
         NewGame ->
             { model | gameState = Playing }
 
-        _ ->
+        Playing ->
+            { model
+                | gameState =
+                    if progress model == 100 then
+                        GameOver
+
+                    else
+                        Playing
+            }
+
+        GameOver ->
             model
 
 
@@ -307,21 +318,21 @@ viewFoundations model =
                     [ none ]
 
         foundations =
-            List.indexedMap (viewFoundation model) model.board.foundations
+            List.indexedMap (viewFoundation model.selection)
+                model.board.foundations
     in
     row [ spacing 10, centerX ] <| foundations ++ spacer
 
 
-viewFoundation : Model -> Int -> List Card -> Element Msg
-viewFoundation model foundation cards =
+viewFoundation : Selection -> Int -> List Card -> Element Msg
+viewFoundation selection foundation cards =
     case List.reverse cards of
         [] ->
-            Card.viewCardSpace <|
-                foundationSelectionAtts model.selection foundation
+            Card.viewCardSpace <| foundationSelectionAtts selection foundation
 
         last :: _ ->
-            viewCard model last <|
-                foundationSelectionAtts model.selection foundation
+            viewCard selection last <|
+                foundationSelectionAtts selection foundation
 
 
 foundationSelectionAtts : Selection -> Int -> List (Attribute Msg)
@@ -344,25 +355,25 @@ foundationSelectionAtts selection foundation =
             []
 
 
-viewCard : Model -> Card -> List (Attribute Msg) -> Element Msg
-viewCard model card attr =
+viewCard : Selection -> Card -> List (Attribute Msg) -> Element Msg
+viewCard selection card attr =
     case card.orientation of
         Card.FaceUp ->
-            viewCardFaceup model card attr
+            viewCardFaceup selection card attr
 
         Card.FaceDown ->
             Card.viewCardFacedown
 
 
-viewCardFaceup : Model -> Card -> List (Attribute Msg) -> Element Msg
-viewCardFaceup model card attr =
+viewCardFaceup : Selection -> Card -> List (Attribute Msg) -> Element Msg
+viewCardFaceup selection card attr =
     column
         (Card.globalCardAtts ++ attr ++ [ Background.color <| rgb 1 1 1 ])
-        [ viewCardFaceupHead model card, Card.viewCardFaceupBody card ]
+        [ viewCardFaceupHead selection card, Card.viewCardFaceupBody card ]
 
 
-viewCardFaceupHead : Model -> Card -> Element msg
-viewCardFaceupHead model card =
+viewCardFaceupHead : Selection -> Card -> Element msg
+viewCardFaceupHead selection card =
     row
         [ padding 3
         , width fill
@@ -379,7 +390,7 @@ viewCardFaceupHead model card =
         ]
         [ Card.viewRank card.rank
         , el [] <| text <| Tuple.first <| Card.suitOutput card.suit
-        , if cardSelected model.selection card then
+        , if cardSelected selection card then
             el [ alignRight, Font.color <| rgb 1 1 1 ] <| text "●"
 
           else
@@ -464,12 +475,6 @@ viewSelectGame =
 viewInfo : Model -> Element Msg
 viewInfo model =
     let
-        numFoundationCards =
-            model.board.foundations |> List.concat |> List.length |> toFloat
-
-        numTargetCards =
-            model.gameType.numFoundations * 13 |> toFloat
-
         movesText =
             if model.moves == 1 then
                 "1 move"
@@ -493,19 +498,25 @@ viewInfo model =
         [ el [ centerX, Font.size 18, Font.bold ] <|
             text <|
                 model.gameType.name
-        , viewProgress <| numFoundationCards / numTargetCards
+        , el [ centerX ] <|
+            text <|
+                String.fromInt (progress model)
+                    ++ "% completed"
         , el [ centerX ] <| text <| movesText
         , el [ centerX, height (fill |> minimum 20) ] <| undoTextEl
         ]
 
 
-viewProgress : Float -> Element Msg
-viewProgress progress =
+progress : Model -> Int
+progress model =
     let
-        intProgress =
-            round (progress * 100)
+        numFoundationCards =
+            model.board.foundations |> List.concat |> List.length |> toFloat
+
+        numTargetCards =
+            model.gameType.numFoundations * 13 |> toFloat
     in
-    el [ centerX ] <| text <| String.fromInt intProgress ++ "% completed"
+    round <| numFoundationCards / numTargetCards * 100
 
 
 viewUndoButton : Element Msg
@@ -528,31 +539,31 @@ viewTableau model =
 viewTableauColumn : Model -> Int -> Element Msg
 viewTableauColumn model colIndex =
     Board.getTableauColumn model.board.tableau colIndex
-        |> viewColumn model colIndex
+        |> viewColumn model.selection colIndex
 
 
-viewColumn : Model -> Int -> List Card -> Element Msg
-viewColumn model colIndex cards =
+viewColumn : Selection -> Int -> List Card -> Element Msg
+viewColumn selection colIndex cards =
     column
         ([ alignTop, spacing -81 ]
-            ++ columnSelectionAtts model.selection colIndex
+            ++ columnSelectionAtts selection colIndex
             ++ Board.columnWarningAtts cards
         )
     <|
         case cards of
             [] ->
-                [ Card.viewCardSpace [] ]
+                List.singleton <| Card.viewCardSpace []
 
             cs ->
-                let
-                    viewTabCard c =
-                        viewCard model
+                List.map
+                    (\c ->
+                        viewCard selection
                             c
                             [ pointer
                             , Events.onClick <| SelectMsg (SelectTableau c)
                             ]
-                in
-                List.map viewTabCard cs
+                    )
+                    cs
 
 
 columnSelectionAtts : Selection -> Int -> List (Attribute Msg)
@@ -588,7 +599,7 @@ viewSpare model =
                     el Card.globalCardAtts none
 
                 Just s ->
-                    viewCard model
+                    viewCard model.selection
                         s
                         [ Events.onClick <| SelectMsg (SelectSpare s), pointer ]
 
@@ -599,6 +610,10 @@ viewSpare model =
         [ viewSingleSpare <| Tuple.first model.board.spare
         , viewSingleSpare <| Tuple.second model.board.spare
         ]
+
+
+
+-- Sidebar
 
 
 viewStock : Int -> Element Msg
@@ -613,6 +628,10 @@ viewStock stockGroups =
                 :: List.repeat (numGroups - 1) Card.viewCardFacedown
                 |> List.reverse
                 |> row [ alignLeft, spacing -50 ]
+
+
+
+-- Subscriptions
 
 
 subscriptions : Model -> Sub Msg
