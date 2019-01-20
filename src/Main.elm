@@ -91,34 +91,10 @@ update msg model =
             )
 
         Undo ->
-            case model.undoHistory of
-                [] ->
-                    ( model, Cmd.none )
-
-                last :: rest ->
-                    ( { model
-                        | board = last
-                        , selection = NoSelection
-                        , undoHistory = rest
-                        , undoUsed = True
-                      }
-                    , Cmd.none
-                    )
+            ( updateUndo model, Cmd.none )
 
         Restart ->
-            case List.reverse model.undoHistory of
-                [] ->
-                    ( model, Cmd.none )
-
-                first :: _ ->
-                    ( { model
-                        | board = first
-                        , selection = NoSelection
-                        , undoHistory = []
-                        , undoUsed = True
-                      }
-                    , Cmd.none
-                    )
+            ( updateRestart model, Cmd.none )
 
         StartGame newGameType ->
             ( initModel newGameType |> updateGameState
@@ -132,6 +108,36 @@ update msg model =
 
         MoveMsg subMsg ->
             updateMove subMsg model
+
+
+updateUndo : Model -> Model
+updateUndo model =
+    case model.undoHistory of
+        [] ->
+            model
+
+        last :: rest ->
+            { model
+                | board = last
+                , selection = NoSelection
+                , undoHistory = rest
+                , undoUsed = True
+            }
+
+
+updateRestart : Model -> Model
+updateRestart model =
+    case List.reverse model.undoHistory of
+        [] ->
+            model
+
+        first :: _ ->
+            { model
+                | board = first
+                , selection = NoSelection
+                , undoHistory = []
+                , undoUsed = True
+            }
 
 
 updateSelect : SelectMsg -> Model -> ( Model, Cmd Msg )
