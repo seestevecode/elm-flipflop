@@ -148,11 +148,8 @@ updateSelect msg model =
                             Board.selectFromCardInTableau
                                 card
                                 model.board.tableau
-
-                        colIndex =
-                            Board.tableauColumn model.board.tableau card
                     in
-                    case colIndex of
+                    case Board.tableauColumn model.board.tableau card of
                         Just col ->
                             if
                                 Card.selectionValidTableauMove cards
@@ -283,12 +280,7 @@ view model =
 
 viewMain : Model -> Element Msg
 viewMain model =
-    column
-        [ spacing 25
-        , alignTop
-        , width <| cardWidth 6
-        ]
-    <|
+    column [ spacing 25, alignTop, width <| cardWidth 6 ] <|
         case model.gameState of
             NewGame ->
                 [ none ]
@@ -332,37 +324,34 @@ globalCardAtts =
 
 viewFoundation : Model -> Int -> List Card -> Element Msg
 viewFoundation model foundation cards =
-    let
-        selectAtts =
-            case model.selection of
-                Spare spareCard ->
-                    [ pointer
-                    , Events.onClick <|
-                        MoveMsg
-                            (Board.MoveSpareToFoundation spareCard
-                                foundation
-                            )
-                    ]
-
-                Tableau tabCards tabCol ->
-                    [ pointer
-                    , Events.onClick <|
-                        MoveMsg
-                            (Board.MoveTableauToFoundation tabCards
-                                tabCol
-                                foundation
-                            )
-                    ]
-
-                _ ->
-                    []
-    in
     case List.reverse cards of
         [] ->
-            viewCardSpace selectAtts
+            viewCardSpace <|
+                foundationSelectionAtts model.selection foundation
 
         last :: _ ->
-            viewCard model last selectAtts
+            viewCard model last <|
+                foundationSelectionAtts model.selection foundation
+
+
+foundationSelectionAtts : Selection -> Int -> List (Attribute Msg)
+foundationSelectionAtts selection foundation =
+    case selection of
+        Spare spareCard ->
+            [ pointer
+            , Events.onClick <|
+                MoveMsg (Board.MoveSpareToFoundation spareCard foundation)
+            ]
+
+        Tableau tabCards tabCol ->
+            [ pointer
+            , Events.onClick <|
+                MoveMsg
+                    (Board.MoveTableauToFoundation tabCards tabCol foundation)
+            ]
+
+        _ ->
+            []
 
 
 viewCardSpace : List (Attribute Msg) -> Element Msg
@@ -574,47 +563,10 @@ viewTableauColumn model colIndex =
 
 viewColumn : Model -> Int -> List Card -> Element Msg
 viewColumn model colIndex cards =
-    let
-        selAtts =
-            case model.selection of
-                Tableau tabCards tabCol ->
-                    [ pointer
-                    , if colIndex == tabCol then
-                        Events.onClick (SelectMsg ClearSelection)
-
-                      else
-                        Events.onClick <|
-                            MoveMsg
-                                (Board.MoveTableauToTableau
-                                    tabCards
-                                    tabCol
-                                    colIndex
-                                )
-                    ]
-
-                Spare spareCard ->
-                    [ pointer
-                    , Events.onClick <|
-                        MoveMsg (Board.MoveSpareToTableau spareCard colIndex)
-                    ]
-
-                _ ->
-                    []
-
-        warningAtts =
-            if List.length cards >= 20 then
-                [ Border.color Const.columnWarningColour
-                , Border.widthEach { bottom = 5, top = 0, right = 0, left = 0 }
-                , Border.solid
-                ]
-
-            else
-                []
-    in
     column
         ([ alignTop, spacing -81 ]
-            ++ selAtts
-            ++ warningAtts
+            ++ columnSelectionAtts model.selection colIndex
+            ++ columnWarningAtts cards
         )
     <|
         case cards of
@@ -631,6 +583,42 @@ viewColumn model colIndex cards =
                             ]
                 in
                 List.map viewTabCard cs
+
+
+columnSelectionAtts : Selection -> Int -> List (Attribute Msg)
+columnSelectionAtts selection colIndex =
+    case selection of
+        Tableau tabCards tabCol ->
+            [ pointer
+            , if colIndex == tabCol then
+                Events.onClick (SelectMsg ClearSelection)
+
+              else
+                Events.onClick <|
+                    MoveMsg
+                        (Board.MoveTableauToTableau tabCards tabCol colIndex)
+            ]
+
+        Spare spareCard ->
+            [ pointer
+            , Events.onClick <|
+                MoveMsg (Board.MoveSpareToTableau spareCard colIndex)
+            ]
+
+        _ ->
+            []
+
+
+columnWarningAtts : List Card -> List (Attribute msg)
+columnWarningAtts cards =
+    if List.length cards >= 20 then
+        [ Border.color Const.columnWarningColour
+        , Border.widthEach { bottom = 5, top = 0, right = 0, left = 0 }
+        , Border.solid
+        ]
+
+    else
+        []
 
 
 viewSpare : Model -> Element Msg

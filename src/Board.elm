@@ -1,4 +1,22 @@
-module Board exposing (Board, MoveMsg(..), Tableau, addCardsFromStock, checkTableauColumnLength, getTableauColumn, moveSprToFnd, moveSprToTab, moveTabToFnd, moveTabToTab, selectFromCardInTableau, tableauColumn, turnUpEndCards, validSprToFnd, validSprToTab, validTabToFnd, validTabToTab)
+module Board exposing
+    ( Board
+    , MoveMsg(..)
+    , Tableau
+    , addCardsFromStock
+    , checkTableauColumnLength
+    , getTableauColumn
+    , moveSprToFnd
+    , moveSprToTab
+    , moveTabToFnd
+    , moveTabToTab
+    , selectFromCardInTableau
+    , tableauColumn
+    , turnUpEndCards
+    , validSprToFnd
+    , validSprToTab
+    , validTabToFnd
+    , validTabToTab
+    )
 
 import Card exposing (Card)
 import Dict exposing (Dict)
