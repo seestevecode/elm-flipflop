@@ -174,16 +174,11 @@ updateSelect msg model =
         SelectSpare card ->
             ( { model
                 | selection =
-                    case model.selection of
-                        Spare c ->
-                            if c == card then
-                                NoSelection
+                    if model.selection == Spare card then
+                        NoSelection
 
-                            else
-                                Spare card
-
-                        _ ->
-                            Spare card
+                    else
+                        Spare card
               }
             , Cmd.none
             )
@@ -709,12 +704,7 @@ viewStockRow els =
                 none
 
             first :: rest ->
-                el
-                    [ inFront <| viewStockRow rest
-                    , moveRight 15
-                    ]
-                <|
-                    first
+                el [ inFront <| viewStockRow rest, moveRight 15 ] <| first
 
 
 viewCardFacedown : Element Msg
