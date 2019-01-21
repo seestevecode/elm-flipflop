@@ -103,7 +103,7 @@ update msg model =
             )
 
         SelectMsg subMsg ->
-            updateSelect subMsg model
+            ( { model | selection = updateSelect subMsg model }, Cmd.none )
 
         MoveMsg subMsg ->
             updateMove subMsg model
@@ -139,49 +139,37 @@ updateRestart model =
             }
 
 
-updateSelect : SelectMsg -> Model -> ( Model, Cmd Msg )
+updateSelect : SelectMsg -> Model -> Selection
 updateSelect msg model =
     case msg of
         ClearSelection ->
-            ( { model | selection = NoSelection }, Cmd.none )
+            NoSelection
 
         SelectTableau card ->
-            ( { model
-                | selection =
-                    let
-                        cards =
-                            Board.selectFromCardInTableau
-                                card
-                                model.board.tableau
-                    in
-                    case Board.tableauColumn model.board.tableau card of
-                        Just col ->
-                            if
-                                Card.selectionValidTableauMove cards
-                                    || Card.selectionValidFoundationMove cards
-                            then
-                                Tableau cards col
-
-                            else
-                                model.selection
-
-                        Nothing ->
-                            model.selection
-              }
-            , Cmd.none
-            )
-
-        SelectSpare card ->
-            ( { model
-                | selection =
-                    if model.selection == Spare card then
-                        NoSelection
+            let
+                cards =
+                    Board.selectFromCardInTableau card model.board.tableau
+            in
+            case Board.tableauColumn model.board.tableau card of
+                Just col ->
+                    if
+                        Card.selectionValidTableauMove cards
+                            || Card.selectionValidFoundationMove cards
+                    then
+                        Tableau cards col
 
                     else
-                        Spare card
-              }
-            , Cmd.none
-            )
+                        model.selection
+
+                Nothing ->
+                    model.selection
+
+        SelectSpare card ->
+            if model.selection == Spare card then
+                NoSelection
+
+            else
+                Spare card
 
 
 updateMove : Board.MoveMsg -> Model -> ( Model, Cmd Msg )
