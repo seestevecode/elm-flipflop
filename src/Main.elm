@@ -109,6 +109,16 @@ update msg model =
             ( updateMove subMsg model, Cmd.none )
 
 
+updateHistory : Model -> Model
+updateHistory model =
+    { model | undoHistory = model.board :: model.undoHistory }
+
+
+updateBoard : Board -> Model -> Model
+updateBoard board model =
+    { model | board = board }
+
+
 updateUndo : Model -> Model
 updateUndo model =
     case model.undoHistory of
@@ -179,55 +189,57 @@ updateMove msg model =
             updateModelTabToTab model cards fromCol toCol
 
         Board.MoveSpareToTableau card toCol ->
-            if Board.validSprToTab model.board card toCol then
-                { model | board = Board.moveSprToTab model.board card toCol }
-                    |> updateModelAfterMove 1
-
-            else
-                model
+            updateMoveIfCheck model
+                (Board.validSprToTab model.board card toCol)
+                (Board.moveSprToTab model.board card toCol)
+                1
 
         Board.MoveSpareToFoundation card toFnd ->
-            if Board.validSprToFnd model.board card toFnd then
-                { model | board = Board.moveSprToFnd model.board card toFnd }
-                    |> updateModelAfterMove 1
-
-            else
-                model
+            updateMoveIfCheck model
+                (Board.validSprToFnd model.board card toFnd)
+                (Board.moveSprToFnd model.board card toFnd)
+                1
 
         Board.MoveTableauToFoundation cards fromTab toFnd ->
-            if Board.validTabToFnd model.board cards fromTab toFnd then
-                { model
-                    | board = Board.moveTabToFnd model.board cards fromTab toFnd
-                }
-                    |> updateModelAfterMove (List.length cards)
-
-            else
-                model
+            updateMoveIfCheck model
+                (Board.validTabToFnd model.board cards fromTab toFnd)
+                (Board.moveTabToFnd model.board cards fromTab toFnd)
+                (List.length cards)
 
         Board.MoveStockToTableau ->
-            { model | board = Board.addCardsFromStock model.board }
-                |> updateModelAfterMove 1
+            updateMoveIfCheck model True (Board.addCardsFromStock model.board) 1
+
+
+updateMoveIfCheck : Model -> Bool -> Board -> Int -> Model
+updateMoveIfCheck model check board moveIncrement =
+    if check then
+        model
+            |> updateHistory
+            |> updateBoard board
+            |> updateModelAfterMove moveIncrement
+
+    else
+        model
 
 
 updateModelTabToTab : Model -> List Card -> Int -> Int -> Model
 updateModelTabToTab model cards fromCol toCol =
     case Board.validTabToTab model.board cards fromCol toCol of
         ( True, Just False ) ->
-            { model
-                | board =
-                    Board.moveTabToTab model.board cards fromCol toCol
-            }
-                |> updateModelAfterMove 1
+            updateMoveIfCheck model
+                True
+                (Board.moveTabToTab model.board cards fromCol toCol)
+                1
 
         ( True, Just True ) ->
-            { model
-                | board =
-                    Board.moveTabToTab model.board
-                        (List.reverse cards)
-                        fromCol
-                        toCol
-            }
-                |> updateModelAfterMove (List.length cards)
+            updateMoveIfCheck model
+                True
+                (Board.moveTabToTab model.board
+                    (List.reverse cards)
+                    fromCol
+                    toCol
+                )
+                (List.length cards)
 
         _ ->
             model
@@ -238,7 +250,6 @@ updateModelAfterMove movesIncrement model =
     { model
         | selection = NoSelection
         , moves = model.moves + movesIncrement
-        , undoHistory = model.board :: model.undoHistory
     }
         |> updateGameState
 
@@ -416,6 +427,8 @@ viewSidebar model =
                 , sidebarBurger
                 , viewSpare model
                 , viewStock <| List.length model.board.stock
+                , row [ alignBottom, width fill ]
+                    [ viewUndoButton, viewRestartButton ]
                 ]
 
             GameOver ->
