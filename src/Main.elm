@@ -106,7 +106,7 @@ update msg model =
             ( { model | selection = updateSelect subMsg model }, Cmd.none )
 
         MoveMsg subMsg ->
-            updateMove subMsg model
+            ( updateMove subMsg model, Cmd.none )
 
 
 updateUndo : Model -> Model
@@ -172,49 +172,41 @@ updateSelect msg model =
                 Spare card
 
 
-updateMove : Board.MoveMsg -> Model -> ( Model, Cmd Msg )
+updateMove : Board.MoveMsg -> Model -> Model
 updateMove msg model =
     case msg of
         Board.MoveTableauToTableau cards fromCol toCol ->
-            ( updateModelTabToTab model cards fromCol toCol, Cmd.none )
+            updateModelTabToTab model cards fromCol toCol
 
         Board.MoveSpareToTableau card toCol ->
             if Board.validSprToTab model.board card toCol then
-                ( { model | board = Board.moveSprToTab model.board card toCol }
+                { model | board = Board.moveSprToTab model.board card toCol }
                     |> updateModelAfterMove 1
-                , Cmd.none
-                )
 
             else
-                ( model, Cmd.none )
+                model
 
         Board.MoveSpareToFoundation card toFnd ->
             if Board.validSprToFnd model.board card toFnd then
-                ( { model | board = Board.moveSprToFnd model.board card toFnd }
+                { model | board = Board.moveSprToFnd model.board card toFnd }
                     |> updateModelAfterMove 1
-                , Cmd.none
-                )
 
             else
-                ( model, Cmd.none )
+                model
 
         Board.MoveTableauToFoundation cards fromTab toFnd ->
             if Board.validTabToFnd model.board cards fromTab toFnd then
-                ( { model
+                { model
                     | board = Board.moveTabToFnd model.board cards fromTab toFnd
-                  }
+                }
                     |> updateModelAfterMove (List.length cards)
-                , Cmd.none
-                )
 
             else
-                ( model, Cmd.none )
+                model
 
         Board.MoveStockToTableau ->
-            ( { model | board = Board.addCardsFromStock model.board }
+            { model | board = Board.addCardsFromStock model.board }
                 |> updateModelAfterMove 1
-            , Cmd.none
-            )
 
 
 updateModelTabToTab : Model -> List Card -> Int -> Int -> Model
