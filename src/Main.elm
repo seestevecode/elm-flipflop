@@ -433,7 +433,7 @@ viewSidebar model =
 
             GameOver ->
                 [ sidebarHeader
-                , el [] <| text "Game Over"
+                , el [ centerX ] <| text "Game Over"
                 , sidebarBurger
                 , viewSelectGame
                 ]
@@ -537,6 +537,11 @@ viewTableauColumn model colIndex =
 
 viewColumn : Selection -> Int -> List Card -> Element Msg
 viewColumn selection colIndex cards =
+    let
+        viewCardInColumn card =
+            viewCard selection card 
+            [ pointer, Events.onClick <| SelectMsg (SelectTableau card) ]
+    in
     column
         ([ alignTop, spacing -81 ]
             ++ columnSelectionAtts selection colIndex
@@ -548,15 +553,7 @@ viewColumn selection colIndex cards =
                 List.singleton <| Card.viewCardSpace []
 
             cs ->
-                List.map
-                    (\c ->
-                        viewCard selection
-                            c
-                            [ pointer
-                            , Events.onClick <| SelectMsg (SelectTableau c)
-                            ]
-                    )
-                    cs
+                List.map viewCardInColumn cs
 
 
 columnSelectionAtts : Selection -> Int -> List (Attribute Msg)
