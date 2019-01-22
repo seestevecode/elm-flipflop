@@ -5,7 +5,6 @@ module Board exposing
     , addCardsFromStock
     , checkTableauColumnLength
     , columnWarningAtts
-    , columnWarningColour
     , getTableauColumn
     , moveSprToFnd
     , moveSprToTab
@@ -21,6 +20,7 @@ module Board exposing
     )
 
 import Card exposing (Card)
+import Constants as Const
 import Dict exposing (Dict)
 import Element exposing (..)
 import Element.Border as Border
@@ -323,20 +323,11 @@ tableauColumn tableau card =
 columnWarningAtts : List Card -> List (Attribute msg)
 columnWarningAtts cards =
     if List.length cards >= 20 then
-        [ Border.color columnWarningColour
+        [ Border.color Const.columnWarningColour
         , Border.widthEach
-            { bottom = Card.cardCornerRound, top = 0, right = 0, left = 0 }
+            { bottom = Const.cardCornerRound, top = 0, right = 0, left = 0 }
         , Border.solid
         ]
 
     else
         []
-
-
-
--- Constants
-
-
-columnWarningColour : Color
-columnWarningColour =
-    rgb255 250 100 42

@@ -15,6 +15,7 @@ import Html exposing (Html)
 import List.Extra as ListX
 import Random
 import Random.List
+import Constants as Const
 
 
 main =
@@ -277,7 +278,7 @@ updateGameState model =
 view : Model -> Html Msg
 view model =
     layout
-        [ padding 10, Background.color <| backgroundColour ]
+        [ padding 10, Background.color <| Const.backgroundColour ]
     <|
         row [ centerX, spacing 25, height fill ]
             [ viewMain model, viewSidebar model ]
@@ -285,7 +286,7 @@ view model =
 
 viewMain : Model -> Element Msg
 viewMain model =
-    column [ spacing 25, alignTop, width <| px <| Card.cardWidth * 6 ] <|
+    column [ spacing 25, alignTop, width <| px <| Const.cardWidth * 6 ] <|
         case model.gameState of
             NewGame ->
                 [ none ]
@@ -294,7 +295,7 @@ viewMain model =
                 [ viewFoundations model, viewTableau model ]
 
             GameOver ->
-                [ none ]
+                [ viewFoundations model ]
 
 
 viewFoundations : Model -> Element Msg
@@ -371,8 +372,8 @@ viewCardFaceupHead selection card =
         , Font.size 20
         , spacing 3
         , Border.roundEach
-            { topLeft = Card.cardCornerRound
-            , topRight = Card.cardCornerRound
+            { topLeft = Const.cardCornerRound
+            , topRight = Const.cardCornerRound
             , bottomLeft = 0
             , bottomRight = 0
             }
@@ -443,12 +444,12 @@ sidebarAtts : List (Attribute Msg)
 sidebarAtts =
     [ spacing 25
     , alignTop
-    , width <| px <| floor <| toFloat Card.cardWidth * 2.5
+    , width <| px <| floor <| toFloat Const.cardWidth * 2.5
     , height fill
     , padding 10
     , Background.color <| rgba 0 0 0 0.25
     , Font.size 15
-    , Font.color sidebarFontColour
+    , Font.color Const.sidebarFontColour
     ]
 
 
@@ -486,7 +487,7 @@ viewInfo model =
         [ Font.size 15
         , spacing 10
         , centerX
-        , height <| px <| floor <| toFloat Card.cardHeight * 1.25
+        , height <| px <| floor <| toFloat Const.cardHeight * 1.25
         ]
         [ el [ centerX, Font.size 18, Font.bold ] <|
             text <|
@@ -627,17 +628,3 @@ viewStock stockGroups =
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.none
-
-
-
--- Constants
-
-
-backgroundColour : Color
-backgroundColour =
-    rgb255 157 120 85
-
-
-sidebarFontColour : Color
-sidebarFontColour =
-    rgb 1 1 1
