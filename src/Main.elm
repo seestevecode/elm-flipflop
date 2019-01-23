@@ -3,6 +3,7 @@ module Main exposing (main)
 import Board exposing (Board)
 import Browser
 import Card exposing (Card)
+import Constants as Const
 import Dict exposing (Dict)
 import Element exposing (..)
 import Element.Background as Background
@@ -15,7 +16,6 @@ import Html exposing (Html)
 import List.Extra as ListX
 import Random
 import Random.List
-import Constants as Const
 
 
 main =
@@ -405,48 +405,59 @@ cardSelected selection card =
 
 viewSidebar : Model -> Element Msg
 viewSidebar model =
+    column sidebarAtts
+        [ column [ centerX, spacing 20, height <| px 200 ] <|
+            viewSidebarTop model
+        , Input.button [ centerX, Font.size 25 ]
+            { onPress = Nothing, label = text "≡" }
+        , column [ centerX, spacing 20, height fill ] <| viewSidebarBottom model
+        ]
+
+
+viewSidebarTop : Model -> List (Element Msg)
+viewSidebarTop model =
     let
         sidebarHeader =
             el [ centerX, Font.size 22, Font.bold ] <| text "FlipFlop"
-
-        sidebarBurger =
-            Input.button [ centerX, Font.size 25 ]
-                { onPress = Nothing, label = text "≡" }
     in
-    column sidebarAtts <|
-        case model.gameState of
-            NewGame ->
-                [ sidebarHeader
-                , el [ centerX ] <| text "New Game"
-                , sidebarBurger
-                , viewSelectGame
-                ]
+    case model.gameState of
+        NewGame ->
+            [ sidebarHeader ]
 
-            Playing ->
-                [ sidebarHeader
-                , viewInfo model
-                , sidebarBurger
-                , viewSpare model
-                , viewStock <| List.length model.board.stock
-                , row [ alignBottom, width fill ]
-                    [ viewUndoButton, viewRestartButton ]
-                ]
+        Playing ->
+            [ sidebarHeader, viewInfo model ]
 
-            GameOver ->
-                [ sidebarHeader
-                , el [ centerX ] <| text "Game Over"
-                , sidebarBurger
-                , viewSelectGame
-                ]
+        GameOver ->
+            [ sidebarHeader
+            , el [ centerX ] <| text "Game Over"
+            ]
+
+
+viewSidebarBottom : Model -> List (Element Msg)
+viewSidebarBottom model =
+    case model.gameState of
+        NewGame ->
+            [ viewSelectGame ]
+
+        Playing ->
+            [ viewSpare model
+            , viewStock model.gameType <| List.length model.board.stock
+            , row [ alignBottom, width fill ]
+                [ viewUndoButton, viewRestartButton ]
+            ]
+
+        GameOver ->
+            []
 
 
 sidebarAtts : List (Attribute Msg)
 sidebarAtts =
     [ spacing 25
     , alignTop
-    , width <| px <| floor <| toFloat Const.cardWidth * 2.5
+    , width <| px 200
     , height fill
     , padding 10
+    , centerX
     , Background.color <| rgba 0 0 0 0.25
     , Font.size 15
     , Font.color Const.sidebarFontColour
@@ -485,7 +496,7 @@ viewInfo model =
     in
     column
         [ Font.size 15
-        , spacing 10
+        , spacing 20
         , centerX
         , height <| px <| floor <| toFloat Const.cardHeight * 1.25
         ]
@@ -540,8 +551,9 @@ viewColumn : Selection -> Int -> List Card -> Element Msg
 viewColumn selection colIndex cards =
     let
         viewCardInColumn card =
-            viewCard selection card 
-            [ pointer, Events.onClick <| SelectMsg (SelectTableau card) ]
+            viewCard selection
+                card
+                [ pointer, Events.onClick <| SelectMsg (SelectTableau card) ]
     in
     column
         ([ alignTop, spacing -81 ]
@@ -593,11 +605,8 @@ viewSpare model =
                     viewCard model.selection
                         s
                         [ Events.onClick <| SelectMsg (SelectSpare s), pointer ]
-
-        selectAttr =
-            [ Events.onClick SelectSpare, pointer ]
     in
-    row [ spacing 10 ]
+    row [ spacing 10, centerX ]
         [ viewSingleSpare <| Tuple.first model.board.spare
         , viewSingleSpare <| Tuple.second model.board.spare
         ]
@@ -607,18 +616,26 @@ viewSpare model =
 -- Sidebar
 
 
-viewStock : Int -> Element Msg
-viewStock stockGroups =
-    case stockGroups of
+viewStock : GameType -> Int -> Element Msg
+viewStock gameType currentGroups =
+    let
+        initStockGroups =
+            initModel gameType |> .board |> .stock |> List.length
+
+        stockWidth =
+            initStockGroups * Const.cardWidth - 50 * (initStockGroups - 1)
+    in
+    case currentGroups of
         0 ->
             none
 
-        numGroups ->
+        numGroups -> 
             el [ pointer, Events.onClick <| MoveMsg Board.MoveStockToTableau ]
                 Card.viewCardFacedown
                 :: List.repeat (numGroups - 1) Card.viewCardFacedown
                 |> List.reverse
-                |> row [ alignLeft, spacing -50 ]
+                |> row [ width <| px <| stockWidth, spacing -50, alignLeft ]
+                |> el [ centerX ]
 
 
 
