@@ -4393,9 +4393,9 @@ function _Browser_load(url)
 		}
 	}));
 }
-var author$project$GameType$GameType = F5(
-	function (name, numFoundations, numSuits, numTableauCards, tableauColSizes) {
-		return {name: name, numFoundations: numFoundations, numSuits: numSuits, numTableauCards: numTableauCards, tableauColSizes: tableauColSizes};
+var author$project$GameType$GameType = F6(
+	function (name, icons, numFoundations, numSuits, numTableauCards, tableauColSizes) {
+		return {icons: icons, name: name, numFoundations: numFoundations, numSuits: numSuits, numTableauCards: numTableauCards, tableauColSizes: tableauColSizes};
 	});
 var elm$core$Basics$apR = F2(
 	function (x, f) {
@@ -4665,49 +4665,55 @@ var elm$core$Tuple$pair = F2(
 var author$project$GameType$validGameTypes = function () {
 	var gameTypes = _List_fromArray(
 		[
-			A5(
+			A6(
 			author$project$GameType$GameType,
 			'One Suit',
+			'♠♠♠♠',
 			4,
 			1,
 			25,
 			_List_fromArray(
 				[5, 5, 5, 5, 5])),
-			A5(
+			A6(
 			author$project$GameType$GameType,
 			'Two Suit',
+			'♠♥♠♥',
 			4,
 			2,
 			25,
 			_List_fromArray(
 				[5, 5, 5, 5, 5])),
-			A5(
+			A6(
 			author$project$GameType$GameType,
 			'Three Suit',
+			'♠♥♣♠',
 			4,
 			3,
 			25,
 			_List_fromArray(
 				[5, 5, 5, 5, 5])),
-			A5(
+			A6(
 			author$project$GameType$GameType,
 			'Four Suit',
+			'♠♥♣♦',
 			4,
 			4,
 			25,
 			_List_fromArray(
 				[5, 5, 5, 5, 5])),
-			A5(
+			A6(
 			author$project$GameType$GameType,
 			'Five Suit',
+			'♠♥♣♦★',
 			5,
 			5,
 			28,
 			_List_fromArray(
 				[6, 6, 6, 5, 5])),
-			A5(
+			A6(
 			author$project$GameType$GameType,
 			'One Suit Extra',
+			'♠♠♠♠♠',
 			5,
 			1,
 			28,
@@ -4768,9 +4774,10 @@ var elm$core$Maybe$withDefault = F2(
 var author$project$GameType$getGameType = function (gameTypeIndex) {
 	return A2(
 		elm$core$Maybe$withDefault,
-		A5(
+		A6(
 			author$project$GameType$GameType,
 			'1-suit',
+			'',
 			4,
 			1,
 			25,
@@ -12677,13 +12684,27 @@ var author$project$Main$viewSelectGame = function () {
 	var gameTypeLabel = function (index) {
 		return A2(
 			mdgriffith$elm_ui$Element$column,
-			_List_Nil,
 			_List_fromArray(
 				[
+					mdgriffith$elm_ui$Element$spacing(2)
+				]),
+			_List_fromArray(
+				[
+					A2(
+					mdgriffith$elm_ui$Element$el,
+					_List_fromArray(
+						[mdgriffith$elm_ui$Element$centerX]),
 					mdgriffith$elm_ui$Element$text(
-					author$project$GameType$getGameType(index).name),
+						author$project$GameType$getGameType(index).name)),
+					A2(
+					mdgriffith$elm_ui$Element$el,
+					_List_fromArray(
+						[
+							mdgriffith$elm_ui$Element$centerX,
+							mdgriffith$elm_ui$Element$Font$size(25)
+						]),
 					mdgriffith$elm_ui$Element$text(
-					author$project$GameType$getGameType(index).name)
+						author$project$GameType$getGameType(index).icons))
 				]));
 	};
 	var newGameLink = function (gameType) {
