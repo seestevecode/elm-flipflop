@@ -472,14 +472,19 @@ sidebarAtts =
 viewSelectGame : Element Msg
 viewSelectGame =
     let
-        gameTypeText index =
-            (GameType.getGameType index |> .name)
-                ++ (GameType.getGameType index |> .name)
+        gameTypeLabel index =
+            column [ spacing 2 ]
+                [ el [ centerX ] <| text <| .name <| GameType.getGameType index
+                , el [ centerX, Font.size 25 ] <|
+                    text <|
+                        .icons <|
+                            GameType.getGameType index
+                ]
 
         newGameLink gameType =
             Input.button [ centerX ]
                 { onPress = Just (StartGame <| GameType.getGameType gameType)
-                , label = text <| gameTypeText gameType
+                , label = gameTypeLabel gameType
                 }
     in
     column [ spacing 20, centerX ] <|

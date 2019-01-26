@@ -15,6 +15,7 @@ import List.Extra as ListX
 
 type alias GameType =
     { name : String
+    , icons : String
     , numFoundations : Int
     , numSuits : Int
     , numTableauCards : Int
@@ -89,19 +90,19 @@ deck gameType =
 getGameType : Int -> GameType
 getGameType gameTypeIndex =
     Dict.get gameTypeIndex validGameTypes
-        |> Maybe.withDefault (GameType "1-suit" 4 1 25 [ 5, 5, 5, 5, 5 ])
+        |> Maybe.withDefault (GameType "1-suit" "" 4 1 25 [ 5, 5, 5, 5, 5 ])
 
 
 validGameTypes : Dict Int GameType
 validGameTypes =
     let
         gameTypes =
-            [ GameType "One Suit" 4 1 25 [ 5, 5, 5, 5, 5 ]
-            , GameType "Two Suit" 4 2 25 [ 5, 5, 5, 5, 5 ]
-            , GameType "Three Suit" 4 3 25 [ 5, 5, 5, 5, 5 ]
-            , GameType "Four Suit" 4 4 25 [ 5, 5, 5, 5, 5 ]
-            , GameType "Five Suit" 5 5 28 [ 6, 6, 6, 5, 5 ]
-            , GameType "One Suit Extra" 5 1 28 [ 6, 6, 6, 5, 5 ]
+            [ GameType "One Suit" "♠♠♠♠" 4 1 25 [ 5, 5, 5, 5, 5 ]
+            , GameType "Two Suit" "♠♥♠♥" 4 2 25 [ 5, 5, 5, 5, 5 ]
+            , GameType "Three Suit" "♠♥♣♠" 4 3 25 [ 5, 5, 5, 5, 5 ]
+            , GameType "Four Suit" "♠♥♣♦" 4 4 25 [ 5, 5, 5, 5, 5 ]
+            , GameType "Five Suit" "♠♥♣♦★" 5 5 28 [ 6, 6, 6, 5, 5 ]
+            , GameType "One Suit Extra" "♠♠♠♠♠" 5 1 28 [ 6, 6, 6, 5, 5 ]
             ]
 
         indices =

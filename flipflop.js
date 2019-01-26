@@ -12674,10 +12674,17 @@ var author$project$Main$StartGame = function (a) {
 	return {$: 'StartGame', a: a};
 };
 var author$project$Main$viewSelectGame = function () {
-	var gameTypeText = function (index) {
-		return _Utils_ap(
-			author$project$GameType$getGameType(index).name,
-			author$project$GameType$getGameType(index).name);
+	var gameTypeLabel = function (index) {
+		return A2(
+			mdgriffith$elm_ui$Element$column,
+			_List_Nil,
+			_List_fromArray(
+				[
+					mdgriffith$elm_ui$Element$text(
+					author$project$GameType$getGameType(index).name),
+					mdgriffith$elm_ui$Element$text(
+					author$project$GameType$getGameType(index).name)
+				]));
 	};
 	var newGameLink = function (gameType) {
 		return A2(
@@ -12685,8 +12692,7 @@ var author$project$Main$viewSelectGame = function () {
 			_List_fromArray(
 				[mdgriffith$elm_ui$Element$centerX]),
 			{
-				label: mdgriffith$elm_ui$Element$text(
-					gameTypeText(gameType)),
+				label: gameTypeLabel(gameType),
 				onPress: elm$core$Maybe$Just(
 					author$project$Main$StartGame(
 						author$project$GameType$getGameType(gameType)))
