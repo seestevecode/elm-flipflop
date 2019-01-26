@@ -277,9 +277,7 @@ updateGameState model =
 
 view : Model -> Html Msg
 view model =
-    layout
-        [ padding 10, Background.color <| Const.backgroundColour ]
-    <|
+    layout [ padding 10 ] <|
         row [ centerX, spacing 25, height fill ]
             [ viewMain model, viewSidebar model ]
 
@@ -408,7 +406,7 @@ viewSidebar model =
     column sidebarAtts
         [ column [ centerX, spacing 20, height <| px 200 ] <|
             viewSidebarTop model
-        , Input.button [ centerX, Font.size 25 ]
+        , Input.button [ centerX, Font.size 25, rotate (pi / 2) ]
             { onPress = Nothing, label = text "≡" }
         , column [ centerX, spacing 20, height fill ] <| viewSidebarBottom model
         ]
@@ -422,7 +420,14 @@ viewSidebarTop model =
     in
     case model.gameState of
         NewGame ->
-            [ sidebarHeader ]
+            [ sidebarHeader
+            , paragraph [ Font.center, padding 10, spacing 10 ] <|
+                [ text "Welcome to Elm FlipFlop - "
+                , text "based on a game by Some Dude."
+                ]
+            , paragraph [ Font.center, padding 10, spacing 10 ] <|
+                [ text "Select a game mode from the list below." ]
+            ]
 
         Playing ->
             [ sidebarHeader, viewInfo model ]
@@ -474,7 +479,8 @@ viewSelectGame =
                 }
     in
     column [ spacing 20, centerX ] <|
-        List.map newGameLink (Dict.keys GameType.validGameTypes)
+        [ text "Select a game type from below to start: " ]
+            ++ List.map newGameLink (Dict.keys GameType.validGameTypes)
 
 
 viewInfo : Model -> Element Msg
@@ -629,7 +635,7 @@ viewStock gameType currentGroups =
         0 ->
             none
 
-        numGroups -> 
+        numGroups ->
             el [ pointer, Events.onClick <| MoveMsg Board.MoveStockToTableau ]
                 Card.viewCardFacedown
                 :: List.repeat (numGroups - 1) Card.viewCardFacedown
