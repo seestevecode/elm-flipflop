@@ -12396,7 +12396,10 @@ var author$project$Main$viewInstructions = A2(
 	_List_fromArray(
 		[
 			mdgriffith$elm_ui$Element$width(mdgriffith$elm_ui$Element$fill),
-			mdgriffith$elm_ui$Element$spacing(10)
+			mdgriffith$elm_ui$Element$height(mdgriffith$elm_ui$Element$fill),
+			mdgriffith$elm_ui$Element$padding(10),
+			mdgriffith$elm_ui$Element$spacing(10),
+			mdgriffith$elm_ui$Element$Background$color(author$project$Constants$cardSpaceColour)
 		]),
 	A2(
 		elm$core$List$map,
@@ -12405,7 +12408,9 @@ var author$project$Main$viewInstructions = A2(
 				mdgriffith$elm_ui$Element$paragraph,
 				_List_fromArray(
 					[
-						mdgriffith$elm_ui$Element$Font$size(18)
+						mdgriffith$elm_ui$Element$Font$size(18),
+						mdgriffith$elm_ui$Element$Font$color(
+						A3(mdgriffith$elm_ui$Element$rgb, 1, 1, 1))
 					]),
 				_List_fromArray(
 					[
@@ -12623,7 +12628,8 @@ var author$project$Main$divider = function (element) {
 				mdgriffith$elm_ui$Element$Border$color(
 				A3(mdgriffith$elm_ui$Element$rgb, 1, 1, 1)),
 				mdgriffith$elm_ui$Element$paddingEach(
-				{bottom: 25, left: 0, right: 0, top: 0})
+				{bottom: 25, left: 0, right: 0, top: 0}),
+				mdgriffith$elm_ui$Element$width(mdgriffith$elm_ui$Element$fill)
 			]),
 		element);
 };
@@ -12665,20 +12671,38 @@ var author$project$Main$viewHeader = A2(
 		]),
 	mdgriffith$elm_ui$Element$text('Elm FlipFlop'));
 var author$project$Main$viewHintButton = mdgriffith$elm_ui$Element$none;
+var mdgriffith$elm_ui$Internal$Flag$fontAlignment = mdgriffith$elm_ui$Internal$Flag$flag(12);
+var mdgriffith$elm_ui$Element$Font$center = A2(mdgriffith$elm_ui$Internal$Model$Class, mdgriffith$elm_ui$Internal$Flag$fontAlignment, mdgriffith$elm_ui$Internal$Style$classes.textCenter);
 var author$project$Main$viewIntro = A2(
 	mdgriffith$elm_ui$Element$textColumn,
-	_List_Nil,
 	_List_fromArray(
 		[
-			mdgriffith$elm_ui$Element$text('Based on a game'),
-			mdgriffith$elm_ui$Element$text('by Zach Gage.')
+			mdgriffith$elm_ui$Element$width(mdgriffith$elm_ui$Element$fill),
+			mdgriffith$elm_ui$Element$centerX
+		]),
+	_List_fromArray(
+		[
+			A2(
+			mdgriffith$elm_ui$Element$paragraph,
+			_List_fromArray(
+				[mdgriffith$elm_ui$Element$Font$center]),
+			_List_fromArray(
+				[
+					mdgriffith$elm_ui$Element$text('Based on a game')
+				])),
+			A2(
+			mdgriffith$elm_ui$Element$paragraph,
+			_List_fromArray(
+				[mdgriffith$elm_ui$Element$Font$center]),
+			_List_fromArray(
+				[
+					mdgriffith$elm_ui$Element$text('by Zach Gage.')
+				]))
 		]));
 var author$project$Main$viewMenuButton = mdgriffith$elm_ui$Element$none;
 var author$project$Main$StartGame = function (a) {
 	return {$: 'StartGame', a: a};
 };
-var mdgriffith$elm_ui$Internal$Flag$fontAlignment = mdgriffith$elm_ui$Internal$Flag$flag(12);
-var mdgriffith$elm_ui$Element$Font$center = A2(mdgriffith$elm_ui$Internal$Model$Class, mdgriffith$elm_ui$Internal$Flag$fontAlignment, mdgriffith$elm_ui$Internal$Style$classes.textCenter);
 var elm$json$Json$Encode$bool = _Json_wrap;
 var elm$html$Html$Attributes$boolProperty = F2(
 	function (key, bool) {

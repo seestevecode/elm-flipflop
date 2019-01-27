@@ -303,8 +303,19 @@ viewDummyFoundations =
 
 viewInstructions : Element msg
 viewInstructions =
-    textColumn [ width fill, spacing 10 ] <|
-        List.map (\string -> paragraph [ Font.size 18 ] [ text string ])
+    textColumn
+        [ width fill
+        , height fill
+        , padding 10
+        , spacing 10
+        , Background.color <| Const.cardSpaceColour
+        ]
+    <|
+        List.map
+            (\string ->
+                paragraph [ Font.size 18, Font.color <| rgb 1 1 1 ]
+                    [ text string ]
+            )
             instructionList
 
 
@@ -460,8 +471,10 @@ viewGameType gameType =
 
 viewIntro : Element msg
 viewIntro =
-    textColumn []
-        [ text "Based on a game", text "by Zach Gage." ]
+    textColumn [ width fill, centerX ]
+        [ paragraph [ Font.center ] [ text "Based on a game" ]
+        , paragraph [ Font.center ] [ text "by Zach Gage." ]
+        ]
 
 
 divider : Element msg -> Element msg
@@ -470,6 +483,7 @@ divider element =
         [ Border.widthEach { bottom = 1, top = 0, left = 0, right = 0 }
         , Border.color <| rgb 1 1 1
         , paddingEach { bottom = 25, top = 0, left = 0, right = 0 }
+        , width fill
         ]
     <|
         element
