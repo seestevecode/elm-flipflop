@@ -293,7 +293,22 @@ viewMain model =
                 [ viewFoundations model, viewTableau model ]
 
             GameOver ->
-                [ viewFoundations model, viewInstructions ]
+                [ viewFoundations model, viewSummary model ]
+
+
+viewSummary : Model -> Element msg
+viewSummary model =
+    column
+        [ centerX
+        , spacing 20
+        , padding 50
+        , Font.color <| rgb 1 1 1
+        , width fill
+        , Background.color Const.cardSpaceColour
+        ]
+        [ el [ centerX, Font.bold, Font.size 30 ] <| text <| model.gameType.name
+        , el [ centerX ] <| text <| "Moves: " ++ String.fromInt model.moves
+        ]
 
 
 viewDummyFoundations : Element Msg

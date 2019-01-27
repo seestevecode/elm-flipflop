@@ -12436,6 +12436,40 @@ var author$project$Main$viewInstructions = A2(
 					]));
 		},
 		author$project$Main$instructionList));
+var mdgriffith$elm_ui$Internal$Flag$fontWeight = mdgriffith$elm_ui$Internal$Flag$flag(13);
+var mdgriffith$elm_ui$Element$Font$bold = A2(mdgriffith$elm_ui$Internal$Model$Class, mdgriffith$elm_ui$Internal$Flag$fontWeight, mdgriffith$elm_ui$Internal$Style$classes.bold);
+var author$project$Main$viewSummary = function (model) {
+	return A2(
+		mdgriffith$elm_ui$Element$column,
+		_List_fromArray(
+			[
+				mdgriffith$elm_ui$Element$centerX,
+				mdgriffith$elm_ui$Element$spacing(20),
+				mdgriffith$elm_ui$Element$padding(50),
+				mdgriffith$elm_ui$Element$Font$color(
+				A3(mdgriffith$elm_ui$Element$rgb, 1, 1, 1)),
+				mdgriffith$elm_ui$Element$width(mdgriffith$elm_ui$Element$fill),
+				mdgriffith$elm_ui$Element$Background$color(author$project$Constants$cardSpaceColour)
+			]),
+		_List_fromArray(
+			[
+				A2(
+				mdgriffith$elm_ui$Element$el,
+				_List_fromArray(
+					[
+						mdgriffith$elm_ui$Element$centerX,
+						mdgriffith$elm_ui$Element$Font$bold,
+						mdgriffith$elm_ui$Element$Font$size(30)
+					]),
+				mdgriffith$elm_ui$Element$text(model.gameType.name)),
+				A2(
+				mdgriffith$elm_ui$Element$el,
+				_List_fromArray(
+					[mdgriffith$elm_ui$Element$centerX]),
+				mdgriffith$elm_ui$Element$text(
+					'Moves: ' + elm$core$String$fromInt(model.moves)))
+			]));
+};
 var author$project$Constants$columnWarningColour = A3(mdgriffith$elm_ui$Element$rgb255, 250, 100, 42);
 var mdgriffith$elm_ui$Internal$Flag$borderColor = mdgriffith$elm_ui$Internal$Flag$flag(28);
 var mdgriffith$elm_ui$Element$Border$color = function (clr) {
@@ -12631,7 +12665,7 @@ var author$project$Main$viewMain = function (model) {
 					return _List_fromArray(
 						[
 							author$project$Main$viewFoundations(model),
-							author$project$Main$viewInstructions
+							author$project$Main$viewSummary(model)
 						]);
 			}
 		}());
@@ -12677,8 +12711,6 @@ var author$project$Main$viewGameType = function (gameType) {
 				mdgriffith$elm_ui$Element$text(gameType.icons)
 			]));
 };
-var mdgriffith$elm_ui$Internal$Flag$fontWeight = mdgriffith$elm_ui$Internal$Flag$flag(13);
-var mdgriffith$elm_ui$Element$Font$bold = A2(mdgriffith$elm_ui$Internal$Model$Class, mdgriffith$elm_ui$Internal$Flag$fontWeight, mdgriffith$elm_ui$Internal$Style$classes.bold);
 var author$project$Main$viewHeader = A2(
 	mdgriffith$elm_ui$Element$el,
 	_List_fromArray(
