@@ -5690,8 +5690,9 @@ var author$project$Main$subscriptions = function (_n0) {
 var author$project$Main$NewDeck = function (a) {
 	return {$: 'NewDeck', a: a};
 };
-var author$project$Main$GameOver = {$: 'GameOver'};
+var author$project$Main$Paused = {$: 'Paused'};
 var author$project$Main$Playing = {$: 'Playing'};
+var author$project$Main$GameOver = {$: 'GameOver'};
 var elm$core$Basics$round = _Basics_round;
 var author$project$Main$progress = function (model) {
 	var numTargetCards = model.gameType.numFoundations * 13;
@@ -6239,12 +6240,14 @@ var author$project$Main$updateMove = F2(
 var author$project$Main$updateRestart = function (model) {
 	var _n0 = elm$core$List$reverse(model.undoHistory);
 	if (!_n0.b) {
-		return model;
+		return _Utils_update(
+			model,
+			{gameState: author$project$Main$Playing});
 	} else {
 		var first = _n0.a;
 		return _Utils_update(
 			model,
-			{board: first, selection: author$project$Main$NoSelection, undoHistory: _List_Nil, undoUsed: true});
+			{board: first, gameState: author$project$Main$Playing, selection: author$project$Main$NoSelection, undoHistory: _List_Nil, undoUsed: true});
 	}
 };
 var author$project$Card$tailFromCard = F2(
@@ -6610,6 +6613,24 @@ var author$project$Main$update = F2(
 			case 'Restart':
 				return _Utils_Tuple2(
 					author$project$Main$updateRestart(model),
+					elm$core$Platform$Cmd$none);
+			case 'TogglePause':
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							gameState: function () {
+								var _n1 = model.gameState;
+								switch (_n1.$) {
+									case 'Paused':
+										return author$project$Main$Playing;
+									case 'Playing':
+										return author$project$Main$Paused;
+									default:
+										return model.gameState;
+								}
+							}()
+						}),
 					elm$core$Platform$Cmd$none);
 			case 'StartGame':
 				var newGameType = msg.a;
@@ -12661,11 +12682,17 @@ var author$project$Main$viewMain = function (model) {
 							author$project$Main$viewFoundations(model),
 							author$project$Main$viewTableau(model)
 						]);
-				default:
+				case 'GameOver':
 					return _List_fromArray(
 						[
 							author$project$Main$viewFoundations(model),
 							author$project$Main$viewSummary(model)
+						]);
+				default:
+					return _List_fromArray(
+						[
+							author$project$Main$viewFoundations(model),
+							author$project$Main$viewInstructions
 						]);
 			}
 		}());
@@ -12788,6 +12815,7 @@ var author$project$Main$viewIntro = A2(
 					mdgriffith$elm_ui$Element$text('by Zach Gage.')
 				]))
 		]));
+var author$project$Main$TogglePause = {$: 'TogglePause'};
 var elm$json$Json$Encode$bool = _Json_wrap;
 var elm$html$Html$Attributes$boolProperty = F2(
 	function (key, bool) {
@@ -12907,13 +12935,35 @@ var mdgriffith$elm_ui$Element$Input$button = F2(
 				_List_fromArray(
 					[label])));
 	});
-var author$project$Main$viewMenuButton = A2(
+var author$project$Main$viewPauseToggle = function (model) {
+	return A2(
+		mdgriffith$elm_ui$Element$Input$button,
+		_List_fromArray(
+			[mdgriffith$elm_ui$Element$centerX]),
+		{
+			label: mdgriffith$elm_ui$Element$text(
+				function () {
+					var _n0 = model.gameState;
+					switch (_n0.$) {
+						case 'Playing':
+							return 'Pause';
+						case 'Paused':
+							return 'Resume';
+						default:
+							return 'NULL';
+					}
+				}()),
+			onPress: elm$core$Maybe$Just(author$project$Main$TogglePause)
+		});
+};
+var author$project$Main$Restart = {$: 'Restart'};
+var author$project$Main$viewRestartButton = A2(
 	mdgriffith$elm_ui$Element$Input$button,
 	_List_fromArray(
 		[mdgriffith$elm_ui$Element$centerX]),
 	{
-		label: mdgriffith$elm_ui$Element$text('Menu'),
-		onPress: elm$core$Maybe$Nothing
+		label: mdgriffith$elm_ui$Element$text('Restart'),
+		onPress: elm$core$Maybe$Just(author$project$Main$Restart)
 	});
 var author$project$Main$StartGame = function (a) {
 	return {$: 'StartGame', a: a};
@@ -12973,7 +13023,7 @@ var author$project$Main$viewSelectGame = function () {
 						[mdgriffith$elm_ui$Element$centerX, mdgriffith$elm_ui$Element$Font$center]),
 					_List_fromArray(
 						[
-							mdgriffith$elm_ui$Element$text('Select a game type from below to start: ')
+							mdgriffith$elm_ui$Element$text('Start a new game:')
 						]))
 				]),
 			A2(
@@ -13103,32 +13153,46 @@ var author$project$Main$viewSidebar = function (model) {
 		author$project$Main$sidebarAtts,
 		function () {
 			var _n0 = model.gameState;
-			if (_n0.$ === 'Playing') {
-				return _List_fromArray(
-					[
-						author$project$Main$viewHeader,
-						author$project$Main$viewGameType(model.gameType),
-						author$project$Main$divider(
-						author$project$Main$viewStats(model)),
-						author$project$Main$viewSpare(model),
-						author$project$Main$divider(
-						A2(
-							author$project$Main$viewStock,
-							elm$core$List$length(model.board.stock),
-							model.gameType)),
-						author$project$Main$viewUndoButton,
-						author$project$Main$viewHintButton,
-						author$project$Main$divider(author$project$Main$viewMenuButton),
-						author$project$Main$viewCredits
-					]);
-			} else {
-				return _List_fromArray(
-					[
-						author$project$Main$viewHeader,
-						author$project$Main$divider(author$project$Main$viewIntro),
-						author$project$Main$divider(author$project$Main$viewSelectGame),
-						author$project$Main$viewCredits
-					]);
+			switch (_n0.$) {
+				case 'Playing':
+					return _List_fromArray(
+						[
+							author$project$Main$viewHeader,
+							author$project$Main$viewGameType(model.gameType),
+							author$project$Main$divider(
+							author$project$Main$viewStats(model)),
+							author$project$Main$viewSpare(model),
+							author$project$Main$divider(
+							A2(
+								author$project$Main$viewStock,
+								elm$core$List$length(model.board.stock),
+								model.gameType)),
+							author$project$Main$viewUndoButton,
+							author$project$Main$viewHintButton,
+							author$project$Main$divider(
+							author$project$Main$viewPauseToggle(model)),
+							author$project$Main$viewCredits
+						]);
+				case 'Paused':
+					return _List_fromArray(
+						[
+							author$project$Main$viewHeader,
+							author$project$Main$divider(
+							author$project$Main$viewGameType(model.gameType)),
+							author$project$Main$divider(author$project$Main$viewSelectGame),
+							author$project$Main$viewRestartButton,
+							author$project$Main$divider(
+							author$project$Main$viewPauseToggle(model)),
+							author$project$Main$viewCredits
+						]);
+				default:
+					return _List_fromArray(
+						[
+							author$project$Main$viewHeader,
+							author$project$Main$divider(author$project$Main$viewIntro),
+							author$project$Main$divider(author$project$Main$viewSelectGame),
+							author$project$Main$viewCredits
+						]);
 			}
 		}());
 };

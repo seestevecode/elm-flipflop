@@ -53,12 +53,14 @@ type GameState
     = NewGame
     | Playing
     | GameOver
+    | Paused
 
 
 type Msg
     = NewDeck (List Card)
     | Undo
     | Restart
+    | TogglePause
     | StartGame GameType
     | SelectMsg SelectMsg
     | MoveMsg Board.MoveMsg
@@ -95,6 +97,22 @@ update msg model =
 
         Restart ->
             ( updateRestart model, Cmd.none )
+
+        TogglePause ->
+            ( { model
+                | gameState =
+                    case model.gameState of
+                        Paused ->
+                            Playing
+
+                        Playing ->
+                            Paused
+
+                        _ ->
+                            model.gameState
+              }
+            , Cmd.none
+            )
 
         StartGame newGameType ->
             ( initModel newGameType |> updateGameState
@@ -139,7 +157,7 @@ updateRestart : Model -> Model
 updateRestart model =
     case List.reverse model.undoHistory of
         [] ->
-            model
+            { model | gameState = Playing }
 
         first :: _ ->
             { model
@@ -147,6 +165,7 @@ updateRestart model =
                 , selection = NoSelection
                 , undoHistory = []
                 , undoUsed = True
+                , gameState = Playing
             }
 
 
@@ -271,7 +290,7 @@ updateGameState model =
                         Playing
             }
 
-        GameOver ->
+        _ ->
             model
 
 
@@ -294,6 +313,9 @@ viewMain model =
 
             GameOver ->
                 [ viewFoundations model, viewSummary model ]
+
+            Paused ->
+                [ viewFoundations model, viewInstructions ]
 
 
 viewSummary : Model -> Element msg
@@ -478,7 +500,19 @@ viewSidebar model =
                     |> divider
                 , viewUndoButton
                 , viewHintButton
-                , viewMenuButton
+                , viewPauseToggle model
+                    |> divider
+                , viewCredits
+                ]
+
+            Paused ->
+                [ viewHeader
+                , viewGameType model.gameType
+                    |> divider
+                , viewSelectGame
+                    |> divider
+                , viewRestartButton
+                , viewPauseToggle model
                     |> divider
                 , viewCredits
                 ]
@@ -564,7 +598,7 @@ viewSelectGame =
     in
     column [ spacing 20, centerX ] <|
         [ paragraph [ centerX, Font.center ]
-            [ text "Select a game type from below to start: " ]
+            [ text "Start a new game:" ]
         ]
             ++ List.map newGameLink (Dict.keys GameType.validGameTypes)
 
@@ -620,9 +654,22 @@ viewHintButton =
         [ text "Hint ", el [ Font.size 12 ] <| text "(Coming Soon)" ]
 
 
-viewMenuButton : Element Msg
-viewMenuButton =
-    Input.button [ centerX ] { onPress = Nothing, label = text "Menu" }
+viewPauseToggle : Model -> Element Msg
+viewPauseToggle model =
+    Input.button [ centerX ]
+        { onPress = Just TogglePause
+        , label =
+            text <|
+                case model.gameState of
+                    Playing ->
+                        "Pause"
+
+                    Paused ->
+                        "Resume"
+
+                    _ ->
+                        "NULL"
+        }
 
 
 viewRestartButton : Element Msg
