@@ -10,3 +10,4 @@ In no particular order:
 - [ ] Mobile/responsive layout
 - [ ] Hint function
 - [ ] Improve documentation
+- [ ] Guarantee winnable deals
