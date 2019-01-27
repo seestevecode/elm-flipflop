@@ -13058,9 +13058,7 @@ var author$project$Main$viewSpare = function (model) {
 		_List_fromArray(
 			[
 				mdgriffith$elm_ui$Element$spacing(10),
-				mdgriffith$elm_ui$Element$centerX,
-				mdgriffith$elm_ui$Element$height(
-				mdgriffith$elm_ui$Element$px(author$project$Constants$cardHeight))
+				mdgriffith$elm_ui$Element$centerX
 			]),
 		_List_fromArray(
 			[
@@ -13109,17 +13107,13 @@ var author$project$Main$viewStock = F2(
 			author$project$Main$initModel(gameType).board.stock);
 		var stockWidth = (initStockGroups * author$project$Constants$cardWidth) - (50 * (initStockGroups - 1));
 		if (!currentGroups) {
-			return mdgriffith$elm_ui$Element$none;
+			return A2(mdgriffith$elm_ui$Element$el, author$project$Card$globalCardAtts, mdgriffith$elm_ui$Element$none);
 		} else {
 			var numGroups = currentGroups;
 			return A2(
 				mdgriffith$elm_ui$Element$el,
 				_List_fromArray(
-					[
-						mdgriffith$elm_ui$Element$centerX,
-						mdgriffith$elm_ui$Element$height(
-						mdgriffith$elm_ui$Element$px(author$project$Constants$cardHeight))
-					]),
+					[mdgriffith$elm_ui$Element$centerX]),
 				A2(
 					mdgriffith$elm_ui$Element$row,
 					_List_fromArray(
