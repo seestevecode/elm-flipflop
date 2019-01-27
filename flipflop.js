@@ -12225,10 +12225,10 @@ var author$project$Main$viewDummyFoundations = A2(
 		},
 		_List_fromArray(
 			[
-				A4(author$project$Card$Card, author$project$Card$Ace, author$project$Card$Spades, author$project$Card$FaceUp, 1),
-				A4(author$project$Card$Card, author$project$Card$Two, author$project$Card$Hearts, author$project$Card$FaceUp, 2),
-				A4(author$project$Card$Card, author$project$Card$Jack, author$project$Card$Clubs, author$project$Card$FaceUp, 3),
-				A4(author$project$Card$Card, author$project$Card$Queen, author$project$Card$Diamonds, author$project$Card$FaceUp, 4),
+				A4(author$project$Card$Card, author$project$Card$King, author$project$Card$Spades, author$project$Card$FaceUp, 1),
+				A4(author$project$Card$Card, author$project$Card$King, author$project$Card$Hearts, author$project$Card$FaceUp, 2),
+				A4(author$project$Card$Card, author$project$Card$King, author$project$Card$Clubs, author$project$Card$FaceUp, 3),
+				A4(author$project$Card$Card, author$project$Card$King, author$project$Card$Diamonds, author$project$Card$FaceUp, 4),
 				A4(author$project$Card$Card, author$project$Card$King, author$project$Card$Stars, author$project$Card$FaceUp, 5)
 			])));
 var mdgriffith$elm_ui$Element$rgba = mdgriffith$elm_ui$Internal$Model$Rgba;

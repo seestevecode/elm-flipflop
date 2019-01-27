@@ -315,10 +315,10 @@ viewDummyFoundations : Element Msg
 viewDummyFoundations =
     row [ spacing 10 ] <|
         List.map (\card -> viewCard NoSelection card [])
-            [ Card Card.Ace Card.Spades Card.FaceUp 1
-            , Card Card.Two Card.Hearts Card.FaceUp 2
-            , Card Card.Jack Card.Clubs Card.FaceUp 3
-            , Card Card.Queen Card.Diamonds Card.FaceUp 4
+            [ Card Card.King Card.Spades Card.FaceUp 1
+            , Card Card.King Card.Hearts Card.FaceUp 2
+            , Card Card.King Card.Clubs Card.FaceUp 3
+            , Card Card.King Card.Diamonds Card.FaceUp 4
             , Card Card.King Card.Stars Card.FaceUp 5
             ]
 
