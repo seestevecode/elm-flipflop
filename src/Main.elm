@@ -460,6 +460,10 @@ cardSelected selection card =
             False
 
 
+
+-- Sidebar
+
+
 viewSidebar : Model -> Element Msg
 viewSidebar model =
     column sidebarAtts <|
@@ -475,10 +479,20 @@ viewSidebar model =
                 , viewUndoButton
                 , viewHintButton
                 , viewMenuButton
+                , viewCredits
                 ]
 
             _ ->
-                [ viewHeader, viewIntro |> divider, viewSelectGame ]
+                [ viewHeader
+                , viewIntro |> divider
+                , viewSelectGame
+                , viewCredits
+                ]
+
+
+viewCredits : Element msg
+viewCredits =
+    el [ alignBottom, Font.size 12, centerX ] <| text "GitHub"
 
 
 viewHeader : Element msg
@@ -488,7 +502,10 @@ viewHeader =
 
 viewGameType : GameType -> Element msg
 viewGameType gameType =
-    column [ centerX ] [ text gameType.name, text gameType.icons ]
+    column [ centerX ]
+        [ el [ centerX, Font.size 18 ] <| text gameType.name
+        , el [ centerX, Font.size 22 ] <| text gameType.icons
+        ]
 
 
 viewIntro : Element msg
