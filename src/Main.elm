@@ -479,6 +479,7 @@ viewSidebar model =
                 , viewUndoButton
                 , viewHintButton
                 , viewMenuButton
+                    |> divider
                 , viewCredits
                 ]
 
@@ -486,13 +487,14 @@ viewSidebar model =
                 [ viewHeader
                 , viewIntro |> divider
                 , viewSelectGame
+                    |> divider
                 , viewCredits
                 ]
 
 
 viewCredits : Element msg
 viewCredits =
-    el [ alignBottom, Font.size 12, centerX ] <| text "GitHub"
+    el [ alignBottom, Font.size 12, centerX ] <| text "© seestevecode - GitHub"
 
 
 viewHeader : Element msg
@@ -582,20 +584,16 @@ viewStats model =
                 text "Undo used"
 
             else
-                none
+                text "Undo not used"
     in
     column
-        [ Font.size 15
-        , spacing 20
-        , centerX
-        , height <| px <| floor <| toFloat Const.cardHeight * 1.25
-        ]
+        [ Font.size 15, spacing 20, centerX ]
         [ el [ centerX ] <|
             text <|
                 String.fromInt (progress model)
                     ++ "% completed"
         , el [ centerX ] <| text <| movesText
-        , el [ centerX, height (fill |> minimum 20) ] <| undoTextEl
+        , el [ centerX ] <| undoTextEl
         ]
 
 
@@ -618,12 +616,13 @@ viewUndoButton =
 
 viewHintButton : Element Msg
 viewHintButton =
-    none
+    paragraph [ Font.center ]
+        [ text "Hint ", el [ Font.size 12 ] <| text "(Coming Soon)" ]
 
 
 viewMenuButton : Element Msg
 viewMenuButton =
-    none
+    Input.button [ centerX ] { onPress = Nothing, label = text "Menu" }
 
 
 viewRestartButton : Element Msg

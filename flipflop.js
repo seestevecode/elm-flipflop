@@ -12710,7 +12710,7 @@ var author$project$Main$viewCredits = A2(
 			mdgriffith$elm_ui$Element$Font$size(12),
 			mdgriffith$elm_ui$Element$centerX
 		]),
-	mdgriffith$elm_ui$Element$text('GitHub'));
+	mdgriffith$elm_ui$Element$text('© seestevecode - GitHub'));
 var author$project$Main$viewGameType = function (gameType) {
 	return A2(
 		mdgriffith$elm_ui$Element$column,
@@ -12745,9 +12745,23 @@ var author$project$Main$viewHeader = A2(
 			mdgriffith$elm_ui$Element$Font$bold
 		]),
 	mdgriffith$elm_ui$Element$text('Elm FlipFlop'));
-var author$project$Main$viewHintButton = mdgriffith$elm_ui$Element$none;
 var mdgriffith$elm_ui$Internal$Flag$fontAlignment = mdgriffith$elm_ui$Internal$Flag$flag(12);
 var mdgriffith$elm_ui$Element$Font$center = A2(mdgriffith$elm_ui$Internal$Model$Class, mdgriffith$elm_ui$Internal$Flag$fontAlignment, mdgriffith$elm_ui$Internal$Style$classes.textCenter);
+var author$project$Main$viewHintButton = A2(
+	mdgriffith$elm_ui$Element$paragraph,
+	_List_fromArray(
+		[mdgriffith$elm_ui$Element$Font$center]),
+	_List_fromArray(
+		[
+			mdgriffith$elm_ui$Element$text('Hint '),
+			A2(
+			mdgriffith$elm_ui$Element$el,
+			_List_fromArray(
+				[
+					mdgriffith$elm_ui$Element$Font$size(12)
+				]),
+			mdgriffith$elm_ui$Element$text('(Coming Soon)'))
+		]));
 var author$project$Main$viewIntro = A2(
 	mdgriffith$elm_ui$Element$textColumn,
 	_List_fromArray(
@@ -12774,10 +12788,6 @@ var author$project$Main$viewIntro = A2(
 					mdgriffith$elm_ui$Element$text('by Zach Gage.')
 				]))
 		]));
-var author$project$Main$viewMenuButton = mdgriffith$elm_ui$Element$none;
-var author$project$Main$StartGame = function (a) {
-	return {$: 'StartGame', a: a};
-};
 var elm$json$Json$Encode$bool = _Json_wrap;
 var elm$html$Html$Attributes$boolProperty = F2(
 	function (key, bool) {
@@ -12897,6 +12907,17 @@ var mdgriffith$elm_ui$Element$Input$button = F2(
 				_List_fromArray(
 					[label])));
 	});
+var author$project$Main$viewMenuButton = A2(
+	mdgriffith$elm_ui$Element$Input$button,
+	_List_fromArray(
+		[mdgriffith$elm_ui$Element$centerX]),
+	{
+		label: mdgriffith$elm_ui$Element$text('Menu'),
+		onPress: elm$core$Maybe$Nothing
+	});
+var author$project$Main$StartGame = function (a) {
+	return {$: 'StartGame', a: a};
+};
 var author$project$Main$viewSelectGame = function () {
 	var gameTypeLabel = function (index) {
 		return A2(
@@ -12996,7 +13017,7 @@ var author$project$Main$viewSpare = function (model) {
 			]));
 };
 var author$project$Main$viewStats = function (model) {
-	var undoTextEl = model.undoUsed ? mdgriffith$elm_ui$Element$text('Undo used') : mdgriffith$elm_ui$Element$none;
+	var undoTextEl = model.undoUsed ? mdgriffith$elm_ui$Element$text('Undo used') : mdgriffith$elm_ui$Element$text('Undo not used');
 	var movesText = (model.moves === 1) ? '1 move' : (elm$core$String$fromInt(model.moves) + ' moves');
 	return A2(
 		mdgriffith$elm_ui$Element$column,
@@ -13004,10 +13025,7 @@ var author$project$Main$viewStats = function (model) {
 			[
 				mdgriffith$elm_ui$Element$Font$size(15),
 				mdgriffith$elm_ui$Element$spacing(20),
-				mdgriffith$elm_ui$Element$centerX,
-				mdgriffith$elm_ui$Element$height(
-				mdgriffith$elm_ui$Element$px(
-					elm$core$Basics$floor(author$project$Constants$cardHeight * 1.25)))
+				mdgriffith$elm_ui$Element$centerX
 			]),
 		_List_fromArray(
 			[
@@ -13026,11 +13044,7 @@ var author$project$Main$viewStats = function (model) {
 				A2(
 				mdgriffith$elm_ui$Element$el,
 				_List_fromArray(
-					[
-						mdgriffith$elm_ui$Element$centerX,
-						mdgriffith$elm_ui$Element$height(
-						A2(mdgriffith$elm_ui$Element$minimum, 20, mdgriffith$elm_ui$Element$fill))
-					]),
+					[mdgriffith$elm_ui$Element$centerX]),
 				undoTextEl)
 			]));
 };
@@ -13104,7 +13118,7 @@ var author$project$Main$viewSidebar = function (model) {
 							model.gameType)),
 						author$project$Main$viewUndoButton,
 						author$project$Main$viewHintButton,
-						author$project$Main$viewMenuButton,
+						author$project$Main$divider(author$project$Main$viewMenuButton),
 						author$project$Main$viewCredits
 					]);
 			} else {
@@ -13112,7 +13126,7 @@ var author$project$Main$viewSidebar = function (model) {
 					[
 						author$project$Main$viewHeader,
 						author$project$Main$divider(author$project$Main$viewIntro),
-						author$project$Main$viewSelectGame,
+						author$project$Main$divider(author$project$Main$viewSelectGame),
 						author$project$Main$viewCredits
 					]);
 			}
