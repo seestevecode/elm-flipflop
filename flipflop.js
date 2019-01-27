@@ -6638,6 +6638,9 @@ var author$project$Main$update = F2(
 		}
 	});
 var author$project$Constants$cardWidth = 68;
+var mdgriffith$elm_ui$Internal$Model$Empty = {$: 'Empty'};
+var mdgriffith$elm_ui$Element$none = mdgriffith$elm_ui$Internal$Model$Empty;
+var author$project$Main$viewDummyFoundations = mdgriffith$elm_ui$Element$none;
 var author$project$Constants$cardCornerRound = 4;
 var author$project$Constants$cardHeight = 105;
 var mdgriffith$elm_ui$Internal$Model$Height = function (a) {
@@ -11836,8 +11839,6 @@ var mdgriffith$elm_ui$Element$el = F2(
 				_List_fromArray(
 					[child])));
 	});
-var mdgriffith$elm_ui$Internal$Model$Empty = {$: 'Empty'};
-var mdgriffith$elm_ui$Element$none = mdgriffith$elm_ui$Internal$Model$Empty;
 var mdgriffith$elm_ui$Internal$Flag$bgColor = mdgriffith$elm_ui$Internal$Flag$flag(8);
 var mdgriffith$elm_ui$Internal$Model$Colored = F3(
 	function (a, b, c) {
@@ -12332,6 +12333,86 @@ var author$project$Main$viewFoundations = function (model) {
 			]),
 		_Utils_ap(foundations, spacer));
 };
+var author$project$Main$instructionList = _List_fromArray(
+	['FlipFlop Solitaire is like other solitaires, but with a few tweaks.', 'To win, you must move all the cards in the deck to the foundations, in order.', 'Each foundation takes an Ace, then a Two, Three, etc. all the way to a King.', '(If you have a card that can go up there, it\'s usually a good idea to move it up.)', 'In addition to the cards above, you have a few extra cards, found in the sidebar.', 'A card may be moved onto any other card that is just above or below it in sequence.', 'Nothing is lower than an Ace or higher than a King.', 'Any stack of sequential adjacent cards can be moved together.', 'However, you can only move a stack of cards if they all share the same suit.']);
+var mdgriffith$elm_ui$Internal$Model$Describe = function (a) {
+	return {$: 'Describe', a: a};
+};
+var mdgriffith$elm_ui$Internal$Model$Paragraph = {$: 'Paragraph'};
+var mdgriffith$elm_ui$Element$paragraph = F2(
+	function (attrs, children) {
+		return A4(
+			mdgriffith$elm_ui$Internal$Model$element,
+			mdgriffith$elm_ui$Internal$Model$asParagraph,
+			mdgriffith$elm_ui$Internal$Model$div,
+			A2(
+				elm$core$List$cons,
+				mdgriffith$elm_ui$Internal$Model$Describe(mdgriffith$elm_ui$Internal$Model$Paragraph),
+				A2(
+					elm$core$List$cons,
+					mdgriffith$elm_ui$Element$width(mdgriffith$elm_ui$Element$fill),
+					A2(
+						elm$core$List$cons,
+						mdgriffith$elm_ui$Element$spacing(5),
+						attrs))),
+			mdgriffith$elm_ui$Internal$Model$Unkeyed(children));
+	});
+var mdgriffith$elm_ui$Internal$Model$Max = F2(
+	function (a, b) {
+		return {$: 'Max', a: a, b: b};
+	});
+var mdgriffith$elm_ui$Element$maximum = F2(
+	function (i, l) {
+		return A2(mdgriffith$elm_ui$Internal$Model$Max, i, l);
+	});
+var mdgriffith$elm_ui$Internal$Model$Min = F2(
+	function (a, b) {
+		return {$: 'Min', a: a, b: b};
+	});
+var mdgriffith$elm_ui$Element$minimum = F2(
+	function (i, l) {
+		return A2(mdgriffith$elm_ui$Internal$Model$Min, i, l);
+	});
+var mdgriffith$elm_ui$Internal$Model$AsTextColumn = {$: 'AsTextColumn'};
+var mdgriffith$elm_ui$Internal$Model$asTextColumn = mdgriffith$elm_ui$Internal$Model$AsTextColumn;
+var mdgriffith$elm_ui$Element$textColumn = F2(
+	function (attrs, children) {
+		return A4(
+			mdgriffith$elm_ui$Internal$Model$element,
+			mdgriffith$elm_ui$Internal$Model$asTextColumn,
+			mdgriffith$elm_ui$Internal$Model$div,
+			A2(
+				elm$core$List$cons,
+				mdgriffith$elm_ui$Element$width(
+					A2(
+						mdgriffith$elm_ui$Element$maximum,
+						750,
+						A2(mdgriffith$elm_ui$Element$minimum, 500, mdgriffith$elm_ui$Element$fill))),
+				attrs),
+			mdgriffith$elm_ui$Internal$Model$Unkeyed(children));
+	});
+var author$project$Main$viewInstructions = A2(
+	mdgriffith$elm_ui$Element$textColumn,
+	_List_fromArray(
+		[
+			mdgriffith$elm_ui$Element$width(mdgriffith$elm_ui$Element$fill),
+			mdgriffith$elm_ui$Element$spacing(10)
+		]),
+	A2(
+		elm$core$List$map,
+		function (string) {
+			return A2(
+				mdgriffith$elm_ui$Element$paragraph,
+				_List_fromArray(
+					[
+						mdgriffith$elm_ui$Element$Font$size(18)
+					]),
+				_List_fromArray(
+					[
+						mdgriffith$elm_ui$Element$text(string)
+					]));
+		},
+		author$project$Main$instructionList));
 var author$project$Constants$columnWarningColour = A3(mdgriffith$elm_ui$Element$rgb255, 250, 100, 42);
 var mdgriffith$elm_ui$Internal$Flag$borderColor = mdgriffith$elm_ui$Internal$Flag$flag(28);
 var mdgriffith$elm_ui$Element$Border$color = function (clr) {
@@ -12516,7 +12597,7 @@ var author$project$Main$viewMain = function (model) {
 			switch (_n0.$) {
 				case 'NewGame':
 					return _List_fromArray(
-						[mdgriffith$elm_ui$Element$none]);
+						[author$project$Main$viewDummyFoundations, author$project$Main$viewInstructions]);
 				case 'Playing':
 					return _List_fromArray(
 						[
@@ -12526,10 +12607,25 @@ var author$project$Main$viewMain = function (model) {
 				default:
 					return _List_fromArray(
 						[
-							author$project$Main$viewFoundations(model)
+							author$project$Main$viewFoundations(model),
+							author$project$Main$viewInstructions
 						]);
 			}
 		}());
+};
+var author$project$Main$divider = function (element) {
+	return A2(
+		mdgriffith$elm_ui$Element$el,
+		_List_fromArray(
+			[
+				mdgriffith$elm_ui$Element$Border$widthEach(
+				{bottom: 1, left: 0, right: 0, top: 0}),
+				mdgriffith$elm_ui$Element$Border$color(
+				A3(mdgriffith$elm_ui$Element$rgb, 1, 1, 1)),
+				mdgriffith$elm_ui$Element$paddingEach(
+				{bottom: 25, left: 0, right: 0, top: 0})
+			]),
+		element);
 };
 var author$project$Constants$sidebarFontColour = A3(mdgriffith$elm_ui$Element$rgb, 1, 1, 1);
 var author$project$Main$sidebarAtts = _List_fromArray(
@@ -12546,7 +12642,43 @@ var author$project$Main$sidebarAtts = _List_fromArray(
 		mdgriffith$elm_ui$Element$Font$size(15),
 		mdgriffith$elm_ui$Element$Font$color(author$project$Constants$sidebarFontColour)
 	]);
-var author$project$Main$Restart = {$: 'Restart'};
+var author$project$Main$viewGameType = function (gameType) {
+	return A2(
+		mdgriffith$elm_ui$Element$column,
+		_List_fromArray(
+			[mdgriffith$elm_ui$Element$centerX]),
+		_List_fromArray(
+			[
+				mdgriffith$elm_ui$Element$text(gameType.name),
+				mdgriffith$elm_ui$Element$text(gameType.icons)
+			]));
+};
+var mdgriffith$elm_ui$Internal$Flag$fontWeight = mdgriffith$elm_ui$Internal$Flag$flag(13);
+var mdgriffith$elm_ui$Element$Font$bold = A2(mdgriffith$elm_ui$Internal$Model$Class, mdgriffith$elm_ui$Internal$Flag$fontWeight, mdgriffith$elm_ui$Internal$Style$classes.bold);
+var author$project$Main$viewHeader = A2(
+	mdgriffith$elm_ui$Element$el,
+	_List_fromArray(
+		[
+			mdgriffith$elm_ui$Element$centerX,
+			mdgriffith$elm_ui$Element$Font$size(22),
+			mdgriffith$elm_ui$Element$Font$bold
+		]),
+	mdgriffith$elm_ui$Element$text('Elm FlipFlop'));
+var author$project$Main$viewHintButton = mdgriffith$elm_ui$Element$none;
+var author$project$Main$viewIntro = A2(
+	mdgriffith$elm_ui$Element$textColumn,
+	_List_Nil,
+	_List_fromArray(
+		[
+			mdgriffith$elm_ui$Element$text('Based on a game'),
+			mdgriffith$elm_ui$Element$text('by Zach Gage.')
+		]));
+var author$project$Main$viewMenuButton = mdgriffith$elm_ui$Element$none;
+var author$project$Main$StartGame = function (a) {
+	return {$: 'StartGame', a: a};
+};
+var mdgriffith$elm_ui$Internal$Flag$fontAlignment = mdgriffith$elm_ui$Internal$Flag$flag(12);
+var mdgriffith$elm_ui$Element$Font$center = A2(mdgriffith$elm_ui$Internal$Model$Class, mdgriffith$elm_ui$Internal$Flag$fontAlignment, mdgriffith$elm_ui$Internal$Style$classes.textCenter);
 var elm$json$Json$Encode$bool = _Json_wrap;
 var elm$html$Html$Attributes$boolProperty = F2(
 	function (key, bool) {
@@ -12614,9 +12746,6 @@ var mdgriffith$elm_ui$Element$Input$onEnter = function (msg) {
 	return A2(mdgriffith$elm_ui$Element$Input$onKey, mdgriffith$elm_ui$Element$Input$enter, msg);
 };
 var mdgriffith$elm_ui$Internal$Model$Button = {$: 'Button'};
-var mdgriffith$elm_ui$Internal$Model$Describe = function (a) {
-	return {$: 'Describe', a: a};
-};
 var mdgriffith$elm_ui$Element$Input$button = F2(
 	function (attrs, _n0) {
 		var onPress = _n0.onPress;
@@ -12669,17 +12798,6 @@ var mdgriffith$elm_ui$Element$Input$button = F2(
 				_List_fromArray(
 					[label])));
 	});
-var author$project$Main$viewRestartButton = A2(
-	mdgriffith$elm_ui$Element$Input$button,
-	_List_fromArray(
-		[mdgriffith$elm_ui$Element$alignRight]),
-	{
-		label: mdgriffith$elm_ui$Element$text('Restart'),
-		onPress: elm$core$Maybe$Just(author$project$Main$Restart)
-	});
-var author$project$Main$StartGame = function (a) {
-	return {$: 'StartGame', a: a};
-};
 var author$project$Main$viewSelectGame = function () {
 	var gameTypeLabel = function (index) {
 		return A2(
@@ -12729,7 +12847,14 @@ var author$project$Main$viewSelectGame = function () {
 		_Utils_ap(
 			_List_fromArray(
 				[
-					mdgriffith$elm_ui$Element$text('Select a game type from below to start: ')
+					A2(
+					mdgriffith$elm_ui$Element$paragraph,
+					_List_fromArray(
+						[mdgriffith$elm_ui$Element$centerX, mdgriffith$elm_ui$Element$Font$center]),
+					_List_fromArray(
+						[
+							mdgriffith$elm_ui$Element$text('Select a game type from below to start: ')
+						]))
 				]),
 			A2(
 				elm$core$List$map,
@@ -12771,11 +12896,50 @@ var author$project$Main$viewSpare = function (model) {
 				viewSingleSpare(model.board.spare.b)
 			]));
 };
+var author$project$Main$viewStats = function (model) {
+	var undoTextEl = model.undoUsed ? mdgriffith$elm_ui$Element$text('Undo used') : mdgriffith$elm_ui$Element$none;
+	var movesText = (model.moves === 1) ? '1 move' : (elm$core$String$fromInt(model.moves) + ' moves');
+	return A2(
+		mdgriffith$elm_ui$Element$column,
+		_List_fromArray(
+			[
+				mdgriffith$elm_ui$Element$Font$size(15),
+				mdgriffith$elm_ui$Element$spacing(20),
+				mdgriffith$elm_ui$Element$centerX,
+				mdgriffith$elm_ui$Element$height(
+				mdgriffith$elm_ui$Element$px(
+					elm$core$Basics$floor(author$project$Constants$cardHeight * 1.25)))
+			]),
+		_List_fromArray(
+			[
+				A2(
+				mdgriffith$elm_ui$Element$el,
+				_List_fromArray(
+					[mdgriffith$elm_ui$Element$centerX]),
+				mdgriffith$elm_ui$Element$text(
+					elm$core$String$fromInt(
+						author$project$Main$progress(model)) + '% completed')),
+				A2(
+				mdgriffith$elm_ui$Element$el,
+				_List_fromArray(
+					[mdgriffith$elm_ui$Element$centerX]),
+				mdgriffith$elm_ui$Element$text(movesText)),
+				A2(
+				mdgriffith$elm_ui$Element$el,
+				_List_fromArray(
+					[
+						mdgriffith$elm_ui$Element$centerX,
+						mdgriffith$elm_ui$Element$height(
+						A2(mdgriffith$elm_ui$Element$minimum, 20, mdgriffith$elm_ui$Element$fill))
+					]),
+				undoTextEl)
+			]));
+};
 var author$project$Board$MoveStockToTableau = {$: 'MoveStockToTableau'};
 var mdgriffith$elm_ui$Internal$Model$Left = {$: 'Left'};
 var mdgriffith$elm_ui$Element$alignLeft = mdgriffith$elm_ui$Internal$Model$AlignX(mdgriffith$elm_ui$Internal$Model$Left);
 var author$project$Main$viewStock = F2(
-	function (gameType, currentGroups) {
+	function (currentGroups, gameType) {
 		var initStockGroups = elm$core$List$length(
 			author$project$Main$initModel(gameType).board.stock);
 		var stockWidth = (initStockGroups * author$project$Constants$cardWidth) - (50 * (initStockGroups - 1));
@@ -12815,237 +12979,43 @@ var author$project$Main$Undo = {$: 'Undo'};
 var author$project$Main$viewUndoButton = A2(
 	mdgriffith$elm_ui$Element$Input$button,
 	_List_fromArray(
-		[mdgriffith$elm_ui$Element$alignLeft]),
+		[mdgriffith$elm_ui$Element$centerX]),
 	{
 		label: mdgriffith$elm_ui$Element$text('Undo'),
 		onPress: elm$core$Maybe$Just(author$project$Main$Undo)
 	});
-var mdgriffith$elm_ui$Internal$Model$Bottom = {$: 'Bottom'};
-var mdgriffith$elm_ui$Element$alignBottom = mdgriffith$elm_ui$Internal$Model$AlignY(mdgriffith$elm_ui$Internal$Model$Bottom);
-var author$project$Main$viewSidebarBottom = function (model) {
-	var _n0 = model.gameState;
-	switch (_n0.$) {
-		case 'NewGame':
-			return _List_fromArray(
-				[author$project$Main$viewSelectGame]);
-		case 'Playing':
-			return _List_fromArray(
-				[
-					author$project$Main$viewSpare(model),
-					A2(
-					author$project$Main$viewStock,
-					model.gameType,
-					elm$core$List$length(model.board.stock)),
-					A2(
-					mdgriffith$elm_ui$Element$row,
-					_List_fromArray(
-						[
-							mdgriffith$elm_ui$Element$alignBottom,
-							mdgriffith$elm_ui$Element$width(mdgriffith$elm_ui$Element$fill)
-						]),
-					_List_fromArray(
-						[author$project$Main$viewUndoButton, author$project$Main$viewRestartButton]))
-				]);
-		default:
-			return _List_Nil;
-	}
-};
-var mdgriffith$elm_ui$Internal$Model$Min = F2(
-	function (a, b) {
-		return {$: 'Min', a: a, b: b};
-	});
-var mdgriffith$elm_ui$Element$minimum = F2(
-	function (i, l) {
-		return A2(mdgriffith$elm_ui$Internal$Model$Min, i, l);
-	});
-var mdgriffith$elm_ui$Internal$Flag$fontWeight = mdgriffith$elm_ui$Internal$Flag$flag(13);
-var mdgriffith$elm_ui$Element$Font$bold = A2(mdgriffith$elm_ui$Internal$Model$Class, mdgriffith$elm_ui$Internal$Flag$fontWeight, mdgriffith$elm_ui$Internal$Style$classes.bold);
-var author$project$Main$viewInfo = function (model) {
-	var undoTextEl = model.undoUsed ? mdgriffith$elm_ui$Element$text('Undo used') : mdgriffith$elm_ui$Element$none;
-	var movesText = (model.moves === 1) ? '1 move' : (elm$core$String$fromInt(model.moves) + ' moves');
-	return A2(
-		mdgriffith$elm_ui$Element$column,
-		_List_fromArray(
-			[
-				mdgriffith$elm_ui$Element$Font$size(15),
-				mdgriffith$elm_ui$Element$spacing(20),
-				mdgriffith$elm_ui$Element$centerX,
-				mdgriffith$elm_ui$Element$height(
-				mdgriffith$elm_ui$Element$px(
-					elm$core$Basics$floor(author$project$Constants$cardHeight * 1.25)))
-			]),
-		_List_fromArray(
-			[
-				A2(
-				mdgriffith$elm_ui$Element$el,
-				_List_fromArray(
-					[
-						mdgriffith$elm_ui$Element$centerX,
-						mdgriffith$elm_ui$Element$Font$size(18),
-						mdgriffith$elm_ui$Element$Font$bold
-					]),
-				mdgriffith$elm_ui$Element$text(model.gameType.name)),
-				A2(
-				mdgriffith$elm_ui$Element$el,
-				_List_fromArray(
-					[mdgriffith$elm_ui$Element$centerX]),
-				mdgriffith$elm_ui$Element$text(
-					elm$core$String$fromInt(
-						author$project$Main$progress(model)) + '% completed')),
-				A2(
-				mdgriffith$elm_ui$Element$el,
-				_List_fromArray(
-					[mdgriffith$elm_ui$Element$centerX]),
-				mdgriffith$elm_ui$Element$text(movesText)),
-				A2(
-				mdgriffith$elm_ui$Element$el,
-				_List_fromArray(
-					[
-						mdgriffith$elm_ui$Element$centerX,
-						mdgriffith$elm_ui$Element$height(
-						A2(mdgriffith$elm_ui$Element$minimum, 20, mdgriffith$elm_ui$Element$fill))
-					]),
-				undoTextEl)
-			]));
-};
-var mdgriffith$elm_ui$Internal$Model$Paragraph = {$: 'Paragraph'};
-var mdgriffith$elm_ui$Element$paragraph = F2(
-	function (attrs, children) {
-		return A4(
-			mdgriffith$elm_ui$Internal$Model$element,
-			mdgriffith$elm_ui$Internal$Model$asParagraph,
-			mdgriffith$elm_ui$Internal$Model$div,
-			A2(
-				elm$core$List$cons,
-				mdgriffith$elm_ui$Internal$Model$Describe(mdgriffith$elm_ui$Internal$Model$Paragraph),
-				A2(
-					elm$core$List$cons,
-					mdgriffith$elm_ui$Element$width(mdgriffith$elm_ui$Element$fill),
-					A2(
-						elm$core$List$cons,
-						mdgriffith$elm_ui$Element$spacing(5),
-						attrs))),
-			mdgriffith$elm_ui$Internal$Model$Unkeyed(children));
-	});
-var mdgriffith$elm_ui$Internal$Flag$fontAlignment = mdgriffith$elm_ui$Internal$Flag$flag(12);
-var mdgriffith$elm_ui$Element$Font$center = A2(mdgriffith$elm_ui$Internal$Model$Class, mdgriffith$elm_ui$Internal$Flag$fontAlignment, mdgriffith$elm_ui$Internal$Style$classes.textCenter);
-var author$project$Main$viewSidebarTop = function (model) {
-	var sidebarHeader = A2(
-		mdgriffith$elm_ui$Element$el,
-		_List_fromArray(
-			[
-				mdgriffith$elm_ui$Element$centerX,
-				mdgriffith$elm_ui$Element$Font$size(22),
-				mdgriffith$elm_ui$Element$Font$bold
-			]),
-		mdgriffith$elm_ui$Element$text('FlipFlop'));
-	var _n0 = model.gameState;
-	switch (_n0.$) {
-		case 'NewGame':
-			return _List_fromArray(
-				[
-					sidebarHeader,
-					A2(
-					mdgriffith$elm_ui$Element$paragraph,
-					_List_fromArray(
-						[
-							mdgriffith$elm_ui$Element$Font$center,
-							mdgriffith$elm_ui$Element$padding(10),
-							mdgriffith$elm_ui$Element$spacing(10)
-						]),
-					_List_fromArray(
-						[
-							mdgriffith$elm_ui$Element$text('Welcome to Elm FlipFlop - '),
-							mdgriffith$elm_ui$Element$text('based on a game by Some Dude.')
-						])),
-					A2(
-					mdgriffith$elm_ui$Element$paragraph,
-					_List_fromArray(
-						[
-							mdgriffith$elm_ui$Element$Font$center,
-							mdgriffith$elm_ui$Element$padding(10),
-							mdgriffith$elm_ui$Element$spacing(10)
-						]),
-					_List_fromArray(
-						[
-							mdgriffith$elm_ui$Element$text('Select a game mode from the list below.')
-						]))
-				]);
-		case 'Playing':
-			return _List_fromArray(
-				[
-					sidebarHeader,
-					author$project$Main$viewInfo(model)
-				]);
-		default:
-			return _List_fromArray(
-				[
-					sidebarHeader,
-					A2(
-					mdgriffith$elm_ui$Element$el,
-					_List_fromArray(
-						[mdgriffith$elm_ui$Element$centerX]),
-					mdgriffith$elm_ui$Element$text('Game Over'))
-				]);
-	}
-};
-var elm$core$Basics$pi = _Basics_pi;
-var mdgriffith$elm_ui$Internal$Flag$rotate = mdgriffith$elm_ui$Internal$Flag$flag(24);
-var mdgriffith$elm_ui$Internal$Model$Rotate = F2(
-	function (a, b) {
-		return {$: 'Rotate', a: a, b: b};
-	});
-var mdgriffith$elm_ui$Internal$Model$TransformComponent = F2(
-	function (a, b) {
-		return {$: 'TransformComponent', a: a, b: b};
-	});
-var mdgriffith$elm_ui$Element$rotate = function (angle) {
-	return A2(
-		mdgriffith$elm_ui$Internal$Model$TransformComponent,
-		mdgriffith$elm_ui$Internal$Flag$rotate,
-		A2(
-			mdgriffith$elm_ui$Internal$Model$Rotate,
-			_Utils_Tuple3(0, 0, 1),
-			angle));
-};
 var author$project$Main$viewSidebar = function (model) {
 	return A2(
 		mdgriffith$elm_ui$Element$column,
 		author$project$Main$sidebarAtts,
-		_List_fromArray(
-			[
-				A2(
-				mdgriffith$elm_ui$Element$column,
-				_List_fromArray(
+		function () {
+			var _n0 = model.gameState;
+			if (_n0.$ === 'Playing') {
+				return _List_fromArray(
 					[
-						mdgriffith$elm_ui$Element$centerX,
-						mdgriffith$elm_ui$Element$spacing(20),
-						mdgriffith$elm_ui$Element$height(
-						mdgriffith$elm_ui$Element$px(200))
-					]),
-				author$project$Main$viewSidebarTop(model)),
-				A2(
-				mdgriffith$elm_ui$Element$Input$button,
-				_List_fromArray(
+						author$project$Main$viewHeader,
+						author$project$Main$viewGameType(model.gameType),
+						author$project$Main$divider(
+						author$project$Main$viewStats(model)),
+						author$project$Main$viewSpare(model),
+						author$project$Main$divider(
+						A2(
+							author$project$Main$viewStock,
+							elm$core$List$length(model.board.stock),
+							model.gameType)),
+						author$project$Main$viewUndoButton,
+						author$project$Main$viewHintButton,
+						author$project$Main$viewMenuButton
+					]);
+			} else {
+				return _List_fromArray(
 					[
-						mdgriffith$elm_ui$Element$centerX,
-						mdgriffith$elm_ui$Element$Font$size(25),
-						mdgriffith$elm_ui$Element$rotate(elm$core$Basics$pi / 2)
-					]),
-				{
-					label: mdgriffith$elm_ui$Element$text('≡'),
-					onPress: elm$core$Maybe$Nothing
-				}),
-				A2(
-				mdgriffith$elm_ui$Element$column,
-				_List_fromArray(
-					[
-						mdgriffith$elm_ui$Element$centerX,
-						mdgriffith$elm_ui$Element$spacing(20),
-						mdgriffith$elm_ui$Element$height(mdgriffith$elm_ui$Element$fill)
-					]),
-				author$project$Main$viewSidebarBottom(model))
-			]));
+						author$project$Main$viewHeader,
+						author$project$Main$divider(author$project$Main$viewIntro),
+						author$project$Main$viewSelectGame
+					]);
+			}
+		}());
 };
 var mdgriffith$elm_ui$Internal$Model$OnlyDynamic = F2(
 	function (a, b) {
