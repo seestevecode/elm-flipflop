@@ -13058,7 +13058,9 @@ var author$project$Main$viewSpare = function (model) {
 		_List_fromArray(
 			[
 				mdgriffith$elm_ui$Element$spacing(10),
-				mdgriffith$elm_ui$Element$centerX
+				mdgriffith$elm_ui$Element$centerX,
+				mdgriffith$elm_ui$Element$height(
+				mdgriffith$elm_ui$Element$px(author$project$Constants$cardHeight))
 			]),
 		_List_fromArray(
 			[
@@ -13113,7 +13115,11 @@ var author$project$Main$viewStock = F2(
 			return A2(
 				mdgriffith$elm_ui$Element$el,
 				_List_fromArray(
-					[mdgriffith$elm_ui$Element$centerX]),
+					[
+						mdgriffith$elm_ui$Element$centerX,
+						mdgriffith$elm_ui$Element$height(
+						mdgriffith$elm_ui$Element$px(author$project$Constants$cardHeight))
+					]),
 				A2(
 					mdgriffith$elm_ui$Element$row,
 					_List_fromArray(

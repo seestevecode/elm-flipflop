@@ -748,7 +748,7 @@ viewSpare model =
                         s
                         [ Events.onClick <| SelectMsg (SelectSpare s), pointer ]
     in
-    row [ spacing 10, centerX ]
+    row [ spacing 10, centerX, height <| px <| Const.cardHeight ]
         [ viewSingleSpare <| Tuple.first model.board.spare
         , viewSingleSpare <| Tuple.second model.board.spare
         ]
@@ -777,7 +777,7 @@ viewStock currentGroups gameType =
                 :: List.repeat (numGroups - 1) Card.viewCardFacedown
                 |> List.reverse
                 |> row [ width <| px <| stockWidth, spacing -50, alignLeft ]
-                |> el [ centerX ]
+                |> el [ centerX, height <| px <| Const.cardHeight ]
 
 
 
