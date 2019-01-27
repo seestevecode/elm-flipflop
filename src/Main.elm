@@ -528,7 +528,13 @@ viewSidebar model =
 
 viewCredits : Element msg
 viewCredits =
-    el [ alignBottom, Font.size 12, centerX ] <| text "© seestevecode - GitHub"
+    paragraph [ alignBottom, Font.size 12, Font.center ]
+        [ text "© seestevecode - "
+        , newTabLink []
+            { url = "https://github.com/seestevecode/elm-flipflop"
+            , label = text "source"
+            }
+        ]
 
 
 viewHeader : Element msg
@@ -752,10 +758,6 @@ viewSpare model =
         [ viewSingleSpare <| Tuple.first model.board.spare
         , viewSingleSpare <| Tuple.second model.board.spare
         ]
-
-
-
--- Sidebar
 
 
 viewStock : Int -> GameType -> Element Msg

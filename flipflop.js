@@ -12729,15 +12729,69 @@ var author$project$Main$sidebarAtts = _List_fromArray(
 	]);
 var mdgriffith$elm_ui$Internal$Model$Bottom = {$: 'Bottom'};
 var mdgriffith$elm_ui$Element$alignBottom = mdgriffith$elm_ui$Internal$Model$AlignY(mdgriffith$elm_ui$Internal$Model$Bottom);
+var elm$html$Html$Attributes$href = function (url) {
+	return A2(
+		elm$html$Html$Attributes$stringProperty,
+		'href',
+		_VirtualDom_noJavaScriptUri(url));
+};
+var elm$html$Html$Attributes$rel = _VirtualDom_attribute('rel');
+var elm$html$Html$Attributes$target = elm$html$Html$Attributes$stringProperty('target');
+var mdgriffith$elm_ui$Element$newTabLink = F2(
+	function (attrs, _n0) {
+		var url = _n0.url;
+		var label = _n0.label;
+		return A4(
+			mdgriffith$elm_ui$Internal$Model$element,
+			mdgriffith$elm_ui$Internal$Model$asEl,
+			mdgriffith$elm_ui$Internal$Model$NodeName('a'),
+			A2(
+				elm$core$List$cons,
+				mdgriffith$elm_ui$Internal$Model$Attr(
+					elm$html$Html$Attributes$href(url)),
+				A2(
+					elm$core$List$cons,
+					mdgriffith$elm_ui$Internal$Model$Attr(
+						elm$html$Html$Attributes$rel('noopener noreferrer')),
+					A2(
+						elm$core$List$cons,
+						mdgriffith$elm_ui$Internal$Model$Attr(
+							elm$html$Html$Attributes$target('_blank')),
+						A2(
+							elm$core$List$cons,
+							mdgriffith$elm_ui$Element$width(mdgriffith$elm_ui$Element$shrink),
+							A2(
+								elm$core$List$cons,
+								mdgriffith$elm_ui$Element$height(mdgriffith$elm_ui$Element$shrink),
+								A2(
+									elm$core$List$cons,
+									mdgriffith$elm_ui$Internal$Model$htmlClass(mdgriffith$elm_ui$Internal$Style$classes.contentCenterX + (' ' + mdgriffith$elm_ui$Internal$Style$classes.contentCenterY)),
+									attrs)))))),
+			mdgriffith$elm_ui$Internal$Model$Unkeyed(
+				_List_fromArray(
+					[label])));
+	});
+var mdgriffith$elm_ui$Internal$Flag$fontAlignment = mdgriffith$elm_ui$Internal$Flag$flag(12);
+var mdgriffith$elm_ui$Element$Font$center = A2(mdgriffith$elm_ui$Internal$Model$Class, mdgriffith$elm_ui$Internal$Flag$fontAlignment, mdgriffith$elm_ui$Internal$Style$classes.textCenter);
 var author$project$Main$viewCredits = A2(
-	mdgriffith$elm_ui$Element$el,
+	mdgriffith$elm_ui$Element$paragraph,
 	_List_fromArray(
 		[
 			mdgriffith$elm_ui$Element$alignBottom,
 			mdgriffith$elm_ui$Element$Font$size(12),
-			mdgriffith$elm_ui$Element$centerX
+			mdgriffith$elm_ui$Element$Font$center
 		]),
-	mdgriffith$elm_ui$Element$text('© seestevecode - GitHub'));
+	_List_fromArray(
+		[
+			mdgriffith$elm_ui$Element$text('© seestevecode - '),
+			A2(
+			mdgriffith$elm_ui$Element$newTabLink,
+			_List_Nil,
+			{
+				label: mdgriffith$elm_ui$Element$text('source'),
+				url: 'https://github.com/seestevecode/elm-flipflop'
+			})
+		]));
 var author$project$Main$viewGameType = function (gameType) {
 	return A2(
 		mdgriffith$elm_ui$Element$column,
@@ -12772,8 +12826,6 @@ var author$project$Main$viewHeader = A2(
 			mdgriffith$elm_ui$Element$Font$bold
 		]),
 	mdgriffith$elm_ui$Element$text('Elm FlipFlop'));
-var mdgriffith$elm_ui$Internal$Flag$fontAlignment = mdgriffith$elm_ui$Internal$Flag$flag(12);
-var mdgriffith$elm_ui$Element$Font$center = A2(mdgriffith$elm_ui$Internal$Model$Class, mdgriffith$elm_ui$Internal$Flag$fontAlignment, mdgriffith$elm_ui$Internal$Style$classes.textCenter);
 var author$project$Main$viewHintButton = A2(
 	mdgriffith$elm_ui$Element$paragraph,
 	_List_fromArray(
