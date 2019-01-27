@@ -12700,6 +12700,17 @@ var author$project$Main$sidebarAtts = _List_fromArray(
 		mdgriffith$elm_ui$Element$Font$size(15),
 		mdgriffith$elm_ui$Element$Font$color(author$project$Constants$sidebarFontColour)
 	]);
+var mdgriffith$elm_ui$Internal$Model$Bottom = {$: 'Bottom'};
+var mdgriffith$elm_ui$Element$alignBottom = mdgriffith$elm_ui$Internal$Model$AlignY(mdgriffith$elm_ui$Internal$Model$Bottom);
+var author$project$Main$viewCredits = A2(
+	mdgriffith$elm_ui$Element$el,
+	_List_fromArray(
+		[
+			mdgriffith$elm_ui$Element$alignBottom,
+			mdgriffith$elm_ui$Element$Font$size(12),
+			mdgriffith$elm_ui$Element$centerX
+		]),
+	mdgriffith$elm_ui$Element$text('GitHub'));
 var author$project$Main$viewGameType = function (gameType) {
 	return A2(
 		mdgriffith$elm_ui$Element$column,
@@ -12707,8 +12718,22 @@ var author$project$Main$viewGameType = function (gameType) {
 			[mdgriffith$elm_ui$Element$centerX]),
 		_List_fromArray(
 			[
-				mdgriffith$elm_ui$Element$text(gameType.name),
-				mdgriffith$elm_ui$Element$text(gameType.icons)
+				A2(
+				mdgriffith$elm_ui$Element$el,
+				_List_fromArray(
+					[
+						mdgriffith$elm_ui$Element$centerX,
+						mdgriffith$elm_ui$Element$Font$size(18)
+					]),
+				mdgriffith$elm_ui$Element$text(gameType.name)),
+				A2(
+				mdgriffith$elm_ui$Element$el,
+				_List_fromArray(
+					[
+						mdgriffith$elm_ui$Element$centerX,
+						mdgriffith$elm_ui$Element$Font$size(22)
+					]),
+				mdgriffith$elm_ui$Element$text(gameType.icons))
 			]));
 };
 var author$project$Main$viewHeader = A2(
@@ -13079,14 +13104,16 @@ var author$project$Main$viewSidebar = function (model) {
 							model.gameType)),
 						author$project$Main$viewUndoButton,
 						author$project$Main$viewHintButton,
-						author$project$Main$viewMenuButton
+						author$project$Main$viewMenuButton,
+						author$project$Main$viewCredits
 					]);
 			} else {
 				return _List_fromArray(
 					[
 						author$project$Main$viewHeader,
 						author$project$Main$divider(author$project$Main$viewIntro),
-						author$project$Main$viewSelectGame
+						author$project$Main$viewSelectGame,
+						author$project$Main$viewCredits
 					]);
 			}
 		}());
