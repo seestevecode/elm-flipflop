@@ -287,13 +287,39 @@ viewMain model =
     column [ spacing 25, alignTop, width <| px <| Const.cardWidth * 6 ] <|
         case model.gameState of
             NewGame ->
-                [ none ]
+                [ viewDummyFoundations, viewInstructions ]
 
             Playing ->
                 [ viewFoundations model, viewTableau model ]
 
             GameOver ->
-                [ viewFoundations model ]
+                [ viewFoundations model, viewInstructions ]
+
+
+viewDummyFoundations : Element msg
+viewDummyFoundations =
+    none
+
+
+viewInstructions : Element msg
+viewInstructions =
+    textColumn [ width fill, spacing 10 ] <|
+        List.map (\string -> paragraph [ Font.size 18 ] [ text string ])
+            instructionList
+
+
+instructionList : List String
+instructionList =
+    [ "FlipFlop Solitaire is like other solitaires, but with a few tweaks."
+    , "To win, you must move all the cards in the deck to the foundations, in order."
+    , "Each foundation takes an Ace, then a Two, Three, etc. all the way to a King."
+    , "(If you have a card that can go up there, it's usually a good idea to move it up.)"
+    , "In addition to the cards above, you have a few extra cards, found in the sidebar."
+    , "A card may be moved onto any other card that is just above or below it in sequence."
+    , "Nothing is lower than an Ace or higher than a King."
+    , "Any stack of sequential adjacent cards can be moved together."
+    , "However, you can only move a stack of cards if they all share the same suit."
+    ]
 
 
 viewFoundations : Model -> Element Msg
@@ -403,56 +429,50 @@ cardSelected selection card =
 
 viewSidebar : Model -> Element Msg
 viewSidebar model =
-    column sidebarAtts
-        [ column [ centerX, spacing 20, height <| px 200 ] <|
-            viewSidebarTop model
-        , Input.button [ centerX, Font.size 25, rotate (pi / 2) ]
-            { onPress = Nothing, label = text "≡" }
-        , column [ centerX, spacing 20, height fill ] <| viewSidebarBottom model
-        ]
-
-
-viewSidebarTop : Model -> List (Element Msg)
-viewSidebarTop model =
-    let
-        sidebarHeader =
-            el [ centerX, Font.size 22, Font.bold ] <| text "FlipFlop"
-    in
-    case model.gameState of
-        NewGame ->
-            [ sidebarHeader
-            , paragraph [ Font.center, padding 10, spacing 10 ] <|
-                [ text "Welcome to Elm FlipFlop - "
-                , text "based on a game by Some Dude."
+    column sidebarAtts <|
+        case model.gameState of
+            Playing ->
+                [ viewHeader
+                , viewGameType model.gameType
+                , viewStats model
+                    |> divider
+                , viewSpare model
+                , viewStock (List.length model.board.stock) model.gameType
+                    |> divider
+                , viewUndoButton
+                , viewHintButton
+                , viewMenuButton
                 ]
-            , paragraph [ Font.center, padding 10, spacing 10 ] <|
-                [ text "Select a game mode from the list below." ]
-            ]
 
-        Playing ->
-            [ sidebarHeader, viewInfo model ]
-
-        GameOver ->
-            [ sidebarHeader
-            , el [ centerX ] <| text "Game Over"
-            ]
+            _ ->
+                [ viewHeader, viewIntro |> divider, viewSelectGame ]
 
 
-viewSidebarBottom : Model -> List (Element Msg)
-viewSidebarBottom model =
-    case model.gameState of
-        NewGame ->
-            [ viewSelectGame ]
+viewHeader : Element msg
+viewHeader =
+    el [ centerX, Font.size 22, Font.bold ] <| text "Elm FlipFlop"
 
-        Playing ->
-            [ viewSpare model
-            , viewStock model.gameType <| List.length model.board.stock
-            , row [ alignBottom, width fill ]
-                [ viewUndoButton, viewRestartButton ]
-            ]
 
-        GameOver ->
-            []
+viewGameType : GameType -> Element msg
+viewGameType gameType =
+    column [ centerX ] [ text gameType.name, text gameType.icons ]
+
+
+viewIntro : Element msg
+viewIntro =
+    textColumn []
+        [ text "Based on a game", text "by Zach Gage." ]
+
+
+divider : Element msg -> Element msg
+divider element =
+    el
+        [ Border.widthEach { bottom = 1, top = 0, left = 0, right = 0 }
+        , Border.color <| rgb 1 1 1
+        , paddingEach { bottom = 25, top = 0, left = 0, right = 0 }
+        ]
+    <|
+        element
 
 
 sidebarAtts : List (Attribute Msg)
@@ -488,12 +508,14 @@ viewSelectGame =
                 }
     in
     column [ spacing 20, centerX ] <|
-        [ text "Select a game type from below to start: " ]
+        [ paragraph [ centerX, Font.center ]
+            [ text "Select a game type from below to start: " ]
+        ]
             ++ List.map newGameLink (Dict.keys GameType.validGameTypes)
 
 
-viewInfo : Model -> Element Msg
-viewInfo model =
+viewStats : Model -> Element Msg
+viewStats model =
     let
         movesText =
             if model.moves == 1 then
@@ -515,10 +537,7 @@ viewInfo model =
         , centerX
         , height <| px <| floor <| toFloat Const.cardHeight * 1.25
         ]
-        [ el [ centerX, Font.size 18, Font.bold ] <|
-            text <|
-                model.gameType.name
-        , el [ centerX ] <|
+        [ el [ centerX ] <|
             text <|
                 String.fromInt (progress model)
                     ++ "% completed"
@@ -541,13 +560,22 @@ progress model =
 
 viewUndoButton : Element Msg
 viewUndoButton =
-    Input.button [ alignLeft ] { onPress = Just Undo, label = text "Undo" }
+    Input.button [ centerX ] { onPress = Just Undo, label = text "Undo" }
+
+
+viewHintButton : Element Msg
+viewHintButton =
+    none
+
+
+viewMenuButton : Element Msg
+viewMenuButton =
+    none
 
 
 viewRestartButton : Element Msg
 viewRestartButton =
-    Input.button [ alignRight ]
-        { onPress = Just Restart, label = text "Restart" }
+    Input.button [ centerX ] { onPress = Just Restart, label = text "Restart" }
 
 
 viewTableau : Model -> Element Msg
@@ -631,8 +659,8 @@ viewSpare model =
 -- Sidebar
 
 
-viewStock : GameType -> Int -> Element Msg
-viewStock gameType currentGroups =
+viewStock : Int -> GameType -> Element Msg
+viewStock currentGroups gameType =
     let
         initStockGroups =
             initModel gameType |> .board |> .stock |> List.length
