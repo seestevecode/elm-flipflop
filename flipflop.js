@@ -6638,9 +6638,6 @@ var author$project$Main$update = F2(
 		}
 	});
 var author$project$Constants$cardWidth = 68;
-var mdgriffith$elm_ui$Internal$Model$Empty = {$: 'Empty'};
-var mdgriffith$elm_ui$Element$none = mdgriffith$elm_ui$Internal$Model$Empty;
-var author$project$Main$viewDummyFoundations = mdgriffith$elm_ui$Element$none;
 var author$project$Constants$cardCornerRound = 4;
 var author$project$Constants$cardHeight = 105;
 var mdgriffith$elm_ui$Internal$Model$Height = function (a) {
@@ -6696,8 +6693,21 @@ var mdgriffith$elm_ui$Internal$Model$Rgba = F4(
 	function (a, b, c, d) {
 		return {$: 'Rgba', a: a, b: b, c: c, d: d};
 	});
-var mdgriffith$elm_ui$Element$rgba = mdgriffith$elm_ui$Internal$Model$Rgba;
-var author$project$Constants$cardSpaceColour = A4(mdgriffith$elm_ui$Element$rgba, 0, 0, 0, 0.25);
+var mdgriffith$elm_ui$Element$rgb255 = F3(
+	function (red, green, blue) {
+		return A4(mdgriffith$elm_ui$Internal$Model$Rgba, red / 255, green / 255, blue / 255, 1);
+	});
+var author$project$Constants$cardBackColour = A3(mdgriffith$elm_ui$Element$rgb255, 44, 49, 64);
+var mdgriffith$elm_ui$Internal$Model$AlignX = function (a) {
+	return {$: 'AlignX', a: a};
+};
+var mdgriffith$elm_ui$Internal$Model$CenterX = {$: 'CenterX'};
+var mdgriffith$elm_ui$Element$centerX = mdgriffith$elm_ui$Internal$Model$AlignX(mdgriffith$elm_ui$Internal$Model$CenterX);
+var mdgriffith$elm_ui$Internal$Model$AlignY = function (a) {
+	return {$: 'AlignY', a: a};
+};
+var mdgriffith$elm_ui$Internal$Model$CenterY = {$: 'CenterY'};
+var mdgriffith$elm_ui$Element$centerY = mdgriffith$elm_ui$Internal$Model$AlignY(mdgriffith$elm_ui$Internal$Model$CenterY);
 var mdgriffith$elm_ui$Internal$Model$Content = {$: 'Content'};
 var mdgriffith$elm_ui$Element$shrink = mdgriffith$elm_ui$Internal$Model$Content;
 var mdgriffith$elm_ui$Internal$Model$Unkeyed = function (a) {
@@ -11839,6 +11849,12 @@ var mdgriffith$elm_ui$Element$el = F2(
 				_List_fromArray(
 					[child])));
 	});
+var mdgriffith$elm_ui$Internal$Model$Empty = {$: 'Empty'};
+var mdgriffith$elm_ui$Element$none = mdgriffith$elm_ui$Internal$Model$Empty;
+var mdgriffith$elm_ui$Element$rgb = F3(
+	function (r, g, b) {
+		return A4(mdgriffith$elm_ui$Internal$Model$Rgba, r, g, b, 1);
+	});
 var mdgriffith$elm_ui$Internal$Flag$bgColor = mdgriffith$elm_ui$Internal$Flag$flag(8);
 var mdgriffith$elm_ui$Internal$Model$Colored = F3(
 	function (a, b, c) {
@@ -11861,105 +11877,6 @@ var mdgriffith$elm_ui$Element$Background$color = function (clr) {
 			'background-color',
 			clr));
 };
-var author$project$Card$viewCardSpace = function (atts) {
-	return A2(
-		mdgriffith$elm_ui$Element$el,
-		_Utils_ap(
-			_List_fromArray(
-				[
-					mdgriffith$elm_ui$Element$Background$color(author$project$Constants$cardSpaceColour)
-				]),
-			_Utils_ap(author$project$Card$globalCardAtts, atts)),
-		mdgriffith$elm_ui$Element$none);
-};
-var author$project$Board$MoveSpareToFoundation = F2(
-	function (a, b) {
-		return {$: 'MoveSpareToFoundation', a: a, b: b};
-	});
-var author$project$Board$MoveTableauToFoundation = F3(
-	function (a, b, c) {
-		return {$: 'MoveTableauToFoundation', a: a, b: b, c: c};
-	});
-var author$project$Main$MoveMsg = function (a) {
-	return {$: 'MoveMsg', a: a};
-};
-var mdgriffith$elm_ui$Internal$Flag$cursor = mdgriffith$elm_ui$Internal$Flag$flag(21);
-var mdgriffith$elm_ui$Internal$Model$Class = F2(
-	function (a, b) {
-		return {$: 'Class', a: a, b: b};
-	});
-var mdgriffith$elm_ui$Element$pointer = A2(mdgriffith$elm_ui$Internal$Model$Class, mdgriffith$elm_ui$Internal$Flag$cursor, mdgriffith$elm_ui$Internal$Style$classes.cursorPointer);
-var elm$core$Basics$composeL = F3(
-	function (g, f, x) {
-		return g(
-			f(x));
-	});
-var elm$virtual_dom$VirtualDom$Normal = function (a) {
-	return {$: 'Normal', a: a};
-};
-var elm$virtual_dom$VirtualDom$on = _VirtualDom_on;
-var elm$html$Html$Events$on = F2(
-	function (event, decoder) {
-		return A2(
-			elm$virtual_dom$VirtualDom$on,
-			event,
-			elm$virtual_dom$VirtualDom$Normal(decoder));
-	});
-var elm$html$Html$Events$onClick = function (msg) {
-	return A2(
-		elm$html$Html$Events$on,
-		'click',
-		elm$json$Json$Decode$succeed(msg));
-};
-var mdgriffith$elm_ui$Internal$Model$Attr = function (a) {
-	return {$: 'Attr', a: a};
-};
-var mdgriffith$elm_ui$Element$Events$onClick = A2(elm$core$Basics$composeL, mdgriffith$elm_ui$Internal$Model$Attr, elm$html$Html$Events$onClick);
-var author$project$Main$foundationSelectionAtts = F2(
-	function (selection, foundation) {
-		switch (selection.$) {
-			case 'Spare':
-				var spareCard = selection.a;
-				return _List_fromArray(
-					[
-						mdgriffith$elm_ui$Element$pointer,
-						mdgriffith$elm_ui$Element$Events$onClick(
-						author$project$Main$MoveMsg(
-							A2(author$project$Board$MoveSpareToFoundation, spareCard, foundation)))
-					]);
-			case 'Tableau':
-				var tabCards = selection.a;
-				var tabCol = selection.b;
-				return _List_fromArray(
-					[
-						mdgriffith$elm_ui$Element$pointer,
-						mdgriffith$elm_ui$Element$Events$onClick(
-						author$project$Main$MoveMsg(
-							A3(author$project$Board$MoveTableauToFoundation, tabCards, tabCol, foundation)))
-					]);
-			default:
-				return _List_Nil;
-		}
-	});
-var mdgriffith$elm_ui$Element$rgb255 = F3(
-	function (red, green, blue) {
-		return A4(mdgriffith$elm_ui$Internal$Model$Rgba, red / 255, green / 255, blue / 255, 1);
-	});
-var author$project$Constants$cardBackColour = A3(mdgriffith$elm_ui$Element$rgb255, 44, 49, 64);
-var mdgriffith$elm_ui$Internal$Model$AlignX = function (a) {
-	return {$: 'AlignX', a: a};
-};
-var mdgriffith$elm_ui$Internal$Model$CenterX = {$: 'CenterX'};
-var mdgriffith$elm_ui$Element$centerX = mdgriffith$elm_ui$Internal$Model$AlignX(mdgriffith$elm_ui$Internal$Model$CenterX);
-var mdgriffith$elm_ui$Internal$Model$AlignY = function (a) {
-	return {$: 'AlignY', a: a};
-};
-var mdgriffith$elm_ui$Internal$Model$CenterY = {$: 'CenterY'};
-var mdgriffith$elm_ui$Element$centerY = mdgriffith$elm_ui$Internal$Model$AlignY(mdgriffith$elm_ui$Internal$Model$CenterY);
-var mdgriffith$elm_ui$Element$rgb = F3(
-	function (r, g, b) {
-		return A4(mdgriffith$elm_ui$Internal$Model$Rgba, r, g, b, 1);
-	});
 var author$project$Card$viewCardFacedown = function () {
 	var innerScale = 1.05;
 	return A2(
@@ -12153,6 +12070,9 @@ var mdgriffith$elm_ui$Element$padding = function (x) {
 };
 var mdgriffith$elm_ui$Internal$Model$AsRow = {$: 'AsRow'};
 var mdgriffith$elm_ui$Internal$Model$asRow = mdgriffith$elm_ui$Internal$Model$AsRow;
+var mdgriffith$elm_ui$Internal$Model$Attr = function (a) {
+	return {$: 'Attr', a: a};
+};
 var mdgriffith$elm_ui$Internal$Model$htmlClass = function (cls) {
 	return mdgriffith$elm_ui$Internal$Model$Attr(
 		elm$html$Html$Attributes$class(cls));
@@ -12290,6 +12210,104 @@ var author$project$Main$viewCard = F3(
 			return A3(author$project$Main$viewCardFaceup, selection, card, attr);
 		} else {
 			return author$project$Card$viewCardFacedown;
+		}
+	});
+var author$project$Main$viewDummyFoundations = A2(
+	mdgriffith$elm_ui$Element$row,
+	_List_fromArray(
+		[
+			mdgriffith$elm_ui$Element$spacing(10)
+		]),
+	A2(
+		elm$core$List$map,
+		function (card) {
+			return A3(author$project$Main$viewCard, author$project$Main$NoSelection, card, _List_Nil);
+		},
+		_List_fromArray(
+			[
+				A4(author$project$Card$Card, author$project$Card$Ace, author$project$Card$Spades, author$project$Card$FaceUp, 1),
+				A4(author$project$Card$Card, author$project$Card$Two, author$project$Card$Hearts, author$project$Card$FaceUp, 2),
+				A4(author$project$Card$Card, author$project$Card$Jack, author$project$Card$Clubs, author$project$Card$FaceUp, 3),
+				A4(author$project$Card$Card, author$project$Card$Queen, author$project$Card$Diamonds, author$project$Card$FaceUp, 4),
+				A4(author$project$Card$Card, author$project$Card$King, author$project$Card$Stars, author$project$Card$FaceUp, 5)
+			])));
+var mdgriffith$elm_ui$Element$rgba = mdgriffith$elm_ui$Internal$Model$Rgba;
+var author$project$Constants$cardSpaceColour = A4(mdgriffith$elm_ui$Element$rgba, 0, 0, 0, 0.25);
+var author$project$Card$viewCardSpace = function (atts) {
+	return A2(
+		mdgriffith$elm_ui$Element$el,
+		_Utils_ap(
+			_List_fromArray(
+				[
+					mdgriffith$elm_ui$Element$Background$color(author$project$Constants$cardSpaceColour)
+				]),
+			_Utils_ap(author$project$Card$globalCardAtts, atts)),
+		mdgriffith$elm_ui$Element$none);
+};
+var author$project$Board$MoveSpareToFoundation = F2(
+	function (a, b) {
+		return {$: 'MoveSpareToFoundation', a: a, b: b};
+	});
+var author$project$Board$MoveTableauToFoundation = F3(
+	function (a, b, c) {
+		return {$: 'MoveTableauToFoundation', a: a, b: b, c: c};
+	});
+var author$project$Main$MoveMsg = function (a) {
+	return {$: 'MoveMsg', a: a};
+};
+var mdgriffith$elm_ui$Internal$Flag$cursor = mdgriffith$elm_ui$Internal$Flag$flag(21);
+var mdgriffith$elm_ui$Internal$Model$Class = F2(
+	function (a, b) {
+		return {$: 'Class', a: a, b: b};
+	});
+var mdgriffith$elm_ui$Element$pointer = A2(mdgriffith$elm_ui$Internal$Model$Class, mdgriffith$elm_ui$Internal$Flag$cursor, mdgriffith$elm_ui$Internal$Style$classes.cursorPointer);
+var elm$core$Basics$composeL = F3(
+	function (g, f, x) {
+		return g(
+			f(x));
+	});
+var elm$virtual_dom$VirtualDom$Normal = function (a) {
+	return {$: 'Normal', a: a};
+};
+var elm$virtual_dom$VirtualDom$on = _VirtualDom_on;
+var elm$html$Html$Events$on = F2(
+	function (event, decoder) {
+		return A2(
+			elm$virtual_dom$VirtualDom$on,
+			event,
+			elm$virtual_dom$VirtualDom$Normal(decoder));
+	});
+var elm$html$Html$Events$onClick = function (msg) {
+	return A2(
+		elm$html$Html$Events$on,
+		'click',
+		elm$json$Json$Decode$succeed(msg));
+};
+var mdgriffith$elm_ui$Element$Events$onClick = A2(elm$core$Basics$composeL, mdgriffith$elm_ui$Internal$Model$Attr, elm$html$Html$Events$onClick);
+var author$project$Main$foundationSelectionAtts = F2(
+	function (selection, foundation) {
+		switch (selection.$) {
+			case 'Spare':
+				var spareCard = selection.a;
+				return _List_fromArray(
+					[
+						mdgriffith$elm_ui$Element$pointer,
+						mdgriffith$elm_ui$Element$Events$onClick(
+						author$project$Main$MoveMsg(
+							A2(author$project$Board$MoveSpareToFoundation, spareCard, foundation)))
+					]);
+			case 'Tableau':
+				var tabCards = selection.a;
+				var tabCol = selection.b;
+				return _List_fromArray(
+					[
+						mdgriffith$elm_ui$Element$pointer,
+						mdgriffith$elm_ui$Element$Events$onClick(
+						author$project$Main$MoveMsg(
+							A3(author$project$Board$MoveTableauToFoundation, tabCards, tabCol, foundation)))
+					]);
+			default:
+				return _List_Nil;
 		}
 	});
 var author$project$Main$viewFoundation = F3(
