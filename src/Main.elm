@@ -16,6 +16,7 @@ import Html exposing (Html)
 import List.Extra as ListX
 import Random
 import Random.List
+import Time
 
 
 main =
@@ -40,6 +41,7 @@ type alias Model =
     , undoHistory : List Board
     , undoUsed : Bool
     , gameState : GameState
+    , durationSeconds : Int
     }
 
 
@@ -64,6 +66,7 @@ type Msg
     | StartGame GameType
     | SelectMsg SelectMsg
     | MoveMsg Board.MoveMsg
+    | IncrementTimer
 
 
 type SelectMsg
@@ -81,6 +84,7 @@ initModel gameType =
     , undoHistory = []
     , undoUsed = False
     , gameState = NewGame
+    , durationSeconds = 0
     }
 
 
@@ -126,6 +130,9 @@ update msg model =
 
         MoveMsg subMsg ->
             ( updateMove subMsg model, Cmd.none )
+
+        IncrementTimer ->
+            ( { model | durationSeconds = model.durationSeconds + 1 }, Cmd.none )
 
 
 updateHistory : Model -> Model
@@ -329,6 +336,10 @@ viewSummary model =
         , Background.color Const.cardSpaceColour
         ]
         [ el [ centerX, Font.bold, Font.size 30 ] <| text <| model.gameType.name
+        , el [ centerX ] <|
+            text <|
+                "Time: "
+                    ++ secondsToMinSec model.durationSeconds
         , el [ centerX ] <| text <| "Moves: " ++ String.fromInt model.moves
         ]
 
@@ -493,13 +504,16 @@ viewSidebar model =
             Playing ->
                 [ viewHeader
                 , viewGameType model.gameType
+                , viewTimer model.durationSeconds
                 , viewStats model
                     |> divider
                 , viewSpare model
                 , viewStock (List.length model.board.stock) model.gameType
                     |> divider
-                , viewUndoButton
-                , viewHintButton
+                , row [ width fill ]
+                    [ el [ alignLeft ] <| viewUndoButton
+                    , el [ alignRight ] <| viewHintButton
+                    ]
                 , viewPauseToggle model
                     |> divider
                 , viewCredits
@@ -508,6 +522,7 @@ viewSidebar model =
             Paused ->
                 [ viewHeader
                 , viewGameType model.gameType
+                , viewTimer model.durationSeconds
                     |> divider
                 , viewSelectGame
                     |> divider
@@ -524,6 +539,25 @@ viewSidebar model =
                     |> divider
                 , viewCredits
                 ]
+
+
+viewTimer : Int -> Element msg
+viewTimer timerSeconds =
+    el [ centerX, Font.size 20 ] <| text <| secondsToMinSec timerSeconds
+
+
+secondsToMinSec : Int -> String
+secondsToMinSec s =
+    let
+        minutes =
+            s // 60
+
+        seconds =
+            s - (minutes * 60)
+    in
+    String.fromInt minutes
+        ++ ":"
+        ++ (String.pad 2 '0' <| String.fromInt seconds)
 
 
 viewCredits : Element msg
@@ -656,8 +690,7 @@ viewUndoButton =
 
 viewHintButton : Element Msg
 viewHintButton =
-    paragraph [ Font.center ]
-        [ text "Hint ", el [ Font.size 12 ] <| text "(Coming Soon)" ]
+    el [ centerX ] <| text "(Hint)"
 
 
 viewPauseToggle : Model -> Element Msg
@@ -787,5 +820,10 @@ viewStock currentGroups gameType =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions _ =
-    Sub.none
+subscriptions model =
+    case model.gameState of
+        Playing ->
+            Time.every 1000 (\_ -> IncrementTimer)
+
+        _ ->
+            Sub.none
