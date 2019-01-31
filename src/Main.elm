@@ -510,8 +510,10 @@ viewSidebar model =
                 , viewSpare model
                 , viewStock (List.length model.board.stock) model.gameType
                     |> divider
-                , viewUndoButton
-                , viewHintButton
+                , row [ width fill ]
+                    [ el [ alignLeft ] <| viewUndoButton
+                    , el [ alignRight ] <| viewHintButton
+                    ]
                 , viewPauseToggle model
                     |> divider
                 , viewCredits
@@ -682,8 +684,7 @@ viewUndoButton =
 
 viewHintButton : Element Msg
 viewHintButton =
-    paragraph [ Font.center ]
-        [ text "Hint ", el [ Font.size 12 ] <| text "(Coming Soon)" ]
+    el [ centerX ] <| text "(Hint)"
 
 
 viewPauseToggle : Model -> Element Msg
