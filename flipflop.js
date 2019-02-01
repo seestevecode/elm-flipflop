@@ -13098,7 +13098,15 @@ var author$project$Main$viewCredits = A2(
 		]),
 	_List_fromArray(
 		[
-			mdgriffith$elm_ui$Element$text('© seestevecode - '),
+			mdgriffith$elm_ui$Element$text('© '),
+			A2(
+			mdgriffith$elm_ui$Element$newTabLink,
+			_List_Nil,
+			{
+				label: mdgriffith$elm_ui$Element$text('seestevecode'),
+				url: 'https://seestevecode.me.uk'
+			}),
+			mdgriffith$elm_ui$Element$text(' - '),
 			A2(
 			mdgriffith$elm_ui$Element$newTabLink,
 			_List_Nil,

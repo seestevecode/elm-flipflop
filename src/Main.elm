@@ -563,7 +563,12 @@ secondsToMinSec s =
 viewCredits : Element msg
 viewCredits =
     paragraph [ alignBottom, Font.size 12, Font.center ]
-        [ text "© seestevecode - "
+        [ text "© "
+        , newTabLink []
+            { url = "https://seestevecode.me.uk"
+            , label = text "seestevecode"
+            }
+        , text " - "
         , newTabLink []
             { url = "https://github.com/seestevecode/elm-flipflop"
             , label = text "source"
