@@ -11,3 +11,4 @@ In no particular order:
 - [ ] Hint function
 - [ ] Improve documentation
 - [ ] Guarantee winnable deals
+- [x] Add timer
