@@ -2,6 +2,7 @@ module Main exposing (main)
 
 import Board exposing (Board)
 import Browser
+import Browser.Events
 import Card exposing (Card)
 import Constants as Const
 import Dict exposing (Dict)
@@ -826,9 +827,16 @@ viewStock currentGroups gameType =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    case model.gameState of
-        Playing ->
-            Time.every 1000 (\_ -> IncrementTimer)
+    let
+        subTimer =
+            case model.gameState of
+                Playing ->
+                    Time.every 1000 (\_ -> IncrementTimer)
 
-        _ ->
-            Sub.none
+                _ ->
+                    Sub.none
+
+        subVisibility =
+            Browser.Events.onVisibilityChange (\_ -> TogglePause)
+    in
+    Sub.batch [ subTimer, subVisibility ]
