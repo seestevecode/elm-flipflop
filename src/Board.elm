@@ -127,8 +127,8 @@ validSprToTab board card toCol =
            )
 
 
-validTabToTab : Board -> List Card -> Int -> Int -> ( Bool, Maybe Bool )
-validTabToTab board cards fromCol toCol =
+validTabToTab : Board -> List Card -> Int -> ( Bool, Maybe Bool )
+validTabToTab board cards toCol =
     let
         destination =
             ListX.last <| getTableauColumn board.tableau toCol
@@ -172,8 +172,8 @@ validSprToFnd board card toFnd =
             card.rank == Card.Ace
 
 
-validTabToFnd : Board -> List Card -> Int -> Int -> Bool
-validTabToFnd board cards fromTab toFnd =
+validTabToFnd : Board -> List Card -> Int -> Bool
+validTabToFnd board cards toFnd =
     let
         destination =
             board.foundations

@@ -6943,21 +6943,20 @@ var $author$project$Board$checkTableauColumnLength = F3(
 				A2($author$project$Board$getTableauColumn, board.tableau, toCol),
 				cards)) <= 20;
 	});
-var $author$project$Board$validTabToTab = F4(
-	function (board, cards, fromCol, toCol) {
+var $author$project$Board$validTabToTab = F3(
+	function (board, cards, toCol) {
 		var destination = $elm_community$list_extra$List$Extra$last(
 			A2($author$project$Board$getTableauColumn, board.tableau, toCol));
-		var _v0 = A3($author$project$Board$checkTableauColumnLength, board, cards, toCol);
-		if (_v0) {
-			var _v1 = _Utils_Tuple3(
+		if (A3($author$project$Board$checkTableauColumnLength, board, cards, toCol)) {
+			var _v0 = _Utils_Tuple3(
 				$elm$core$List$head(cards),
 				$elm_community$list_extra$List$Extra$last(cards),
 				destination);
-			if (_v1.c.$ === 'Just') {
-				if ((_v1.a.$ === 'Just') && (_v1.b.$ === 'Just')) {
-					var sourceHead = _v1.a.a;
-					var sourceLast = _v1.b.a;
-					var dest = _v1.c.a;
+			if (_v0.c.$ === 'Just') {
+				if ((_v0.a.$ === 'Just') && (_v0.b.$ === 'Just')) {
+					var sourceHead = _v0.a.a;
+					var sourceLast = _v0.b.a;
+					var dest = _v0.c.a;
 					return A2($author$project$Card$cardsLinkTableauBuild, sourceHead, dest) ? _Utils_Tuple2(
 						true,
 						$elm$core$Maybe$Just(false)) : (A2($author$project$Card$cardsLinkTableauBuild, sourceLast, dest) ? _Utils_Tuple2(
@@ -6967,7 +6966,7 @@ var $author$project$Board$validTabToTab = F4(
 					return _Utils_Tuple2(false, $elm$core$Maybe$Nothing);
 				}
 			} else {
-				var _v2 = _v1.c;
+				var _v1 = _v0.c;
 				return _Utils_Tuple2(
 					true,
 					$elm$core$Maybe$Just(false));
@@ -6978,7 +6977,7 @@ var $author$project$Board$validTabToTab = F4(
 	});
 var $author$project$Main$updateModelTabToTab = F4(
 	function (model, cards, fromCol, toCol) {
-		var _v0 = A4($author$project$Board$validTabToTab, model.board, cards, fromCol, toCol);
+		var _v0 = A3($author$project$Board$validTabToTab, model.board, cards, toCol);
 		if (_v0.a && (_v0.b.$ === 'Just')) {
 			if (!_v0.b.a) {
 				return A4(
@@ -7114,8 +7113,8 @@ var $author$project$Card$selectionValidFoundationMove = function (cards) {
 	return $elm$core$List$length(
 		$author$project$Card$groupCardsFoundationMove(cards)) === 1;
 };
-var $author$project$Board$validTabToFnd = F4(
-	function (board, cards, fromTab, toFnd) {
+var $author$project$Board$validTabToFnd = F3(
+	function (board, cards, toFnd) {
 		var destination = $elm_community$list_extra$List$Extra$last(
 			A2(
 				$elm$core$Maybe$withDefault,
@@ -7174,7 +7173,7 @@ var $author$project$Main$updateMove = F2(
 				return A4(
 					$author$project$Main$updateMoveIfCheck,
 					model,
-					A4($author$project$Board$validTabToFnd, model.board, cards, fromTab, toFnd),
+					A3($author$project$Board$validTabToFnd, model.board, cards, toFnd),
 					A4($author$project$Board$moveTabToFnd, model.board, cards, fromTab, toFnd),
 					$elm$core$List$length(cards));
 			default:

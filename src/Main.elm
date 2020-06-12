@@ -258,7 +258,7 @@ updateMove msg model =
 
         Board.MoveTableauToFoundation cards fromTab toFnd ->
             updateMoveIfCheck model
-                (Board.validTabToFnd model.board cards fromTab toFnd)
+                (Board.validTabToFnd model.board cards toFnd)
                 (Board.moveTabToFnd model.board cards fromTab toFnd)
                 (List.length cards)
 
@@ -280,7 +280,7 @@ updateMoveIfCheck model check board moveIncrement =
 
 updateModelTabToTab : Model -> List Card -> Int -> Int -> Model
 updateModelTabToTab model cards fromCol toCol =
-    case Board.validTabToTab model.board cards fromCol toCol of
+    case Board.validTabToTab model.board cards toCol of
         ( True, Just False ) ->
             updateMoveIfCheck model
                 True
