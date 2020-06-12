@@ -22,7 +22,7 @@ module Board exposing
 import Card exposing (Card)
 import Constants as Const
 import Dict exposing (Dict)
-import Element exposing (..)
+import Element exposing (Attribute)
 import Element.Border as Border
 import List.Extra as ListX
 
@@ -133,27 +133,26 @@ validTabToTab board cards fromCol toCol =
         destination =
             ListX.last <| getTableauColumn board.tableau toCol
     in
-    case checkTableauColumnLength board cards toCol of
-        True ->
-            case ( List.head cards, ListX.last cards, destination ) of
-                ( Just sourceHead, Just sourceLast, Just dest ) ->
-                    if Card.cardsLinkTableauBuild sourceHead dest then
-                        ( True, Just False )
-
-                    else if Card.cardsLinkTableauBuild sourceLast dest then
-                        ( True, Just True )
-
-                    else
-                        ( False, Nothing )
-
-                ( _, _, Nothing ) ->
+    if checkTableauColumnLength board cards toCol then
+        case ( List.head cards, ListX.last cards, destination ) of
+            ( Just sourceHead, Just sourceLast, Just dest ) ->
+                if Card.cardsLinkTableauBuild sourceHead dest then
                     ( True, Just False )
 
-                ( _, _, _ ) ->
+                else if Card.cardsLinkTableauBuild sourceLast dest then
+                    ( True, Just True )
+
+                else
                     ( False, Nothing )
 
-        False ->
-            ( False, Nothing )
+            ( _, _, Nothing ) ->
+                ( True, Just False )
+
+            ( _, _, _ ) ->
+                ( False, Nothing )
+
+    else
+        ( False, Nothing )
 
 
 validSprToFnd : Board -> Card -> Int -> Bool
