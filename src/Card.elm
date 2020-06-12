@@ -25,7 +25,22 @@ module Card exposing
     )
 
 import Constants as Const
-import Element exposing (..)
+import Element
+    exposing
+        ( Attribute
+        , Color
+        , Element
+        , centerX
+        , centerY
+        , el
+        , height
+        , none
+        , paddingEach
+        , px
+        , rgb
+        , text
+        , width
+        )
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
@@ -33,7 +48,11 @@ import List.Extra as ListX
 
 
 type alias Card =
-    { rank : Rank, suit : Suit, orientation : Orientation, id : Int }
+    { rank : Rank
+    , suit : Suit
+    , orientation : Orientation
+    , id : Int
+    }
 
 
 type Rank
@@ -280,9 +299,11 @@ viewCardFacedown =
 viewCardSpace : List (Attribute msg) -> Element msg
 viewCardSpace atts =
     el
-        ([ Background.color <| Const.cardSpaceColour ]
-            ++ globalCardAtts
-            ++ atts
+        (List.concat
+            [ [ Background.color <| Const.cardSpaceColour ]
+            , globalCardAtts
+            , atts
+            ]
         )
     <|
         none

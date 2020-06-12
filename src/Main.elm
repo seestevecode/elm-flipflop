@@ -5,8 +5,36 @@ import Browser
 import Browser.Events
 import Card exposing (Card)
 import Constants as Const
-import Dict exposing (Dict)
-import Element exposing (..)
+import Dict exposing (keys)
+import Element
+    exposing
+        ( Attribute
+        , Element
+        , alignBottom
+        , alignLeft
+        , alignRight
+        , alignTop
+        , centerX
+        , column
+        , el
+        , fill
+        , height
+        , layout
+        , newTabLink
+        , none
+        , padding
+        , paddingEach
+        , paragraph
+        , pointer
+        , px
+        , rgb
+        , rgba
+        , row
+        , spacing
+        , text
+        , textColumn
+        , width
+        )
 import Element.Background as Background
 import Element.Border as Border
 import Element.Events as Events
@@ -14,12 +42,12 @@ import Element.Font as Font
 import Element.Input as Input
 import GameType exposing (GameType)
 import Html exposing (Html)
-import List.Extra as ListX
 import Random
 import Random.List
 import Time
 
 
+main : Program () Model Msg
 main =
     Browser.element
         { init = init
@@ -579,7 +607,7 @@ viewCredits =
 
 viewHeader : Element msg
 viewHeader =
-    el [ centerX, Font.size 22, Font.bold ] <| text "Elm FlipFlop"
+    el [ centerX, Font.size 22, Font.bold ] <| text "FlipFlop Solitaire"
 
 
 viewGameType : GameType -> Element msg

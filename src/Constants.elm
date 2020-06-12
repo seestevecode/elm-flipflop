@@ -16,7 +16,7 @@ module Constants exposing
     , starsColour
     )
 
-import Element exposing (..)
+import Element exposing (Color, rgb, rgb255, rgba)
 
 
 
@@ -96,4 +96,3 @@ cardWidth =
 cardSpaceColour : Color
 cardSpaceColour =
     rgba 0 0 0 0.25
-
