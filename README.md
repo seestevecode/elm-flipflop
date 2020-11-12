@@ -1,4 +1,4 @@
-# Elm FlipFlop
+# FlipFlop Solitaire
 Based on a game by Zach Gage
 
 ## Roadmap
