@@ -13739,7 +13739,7 @@ var $author$project$Main$viewCredits = A2(
 			_List_Nil,
 			{
 				aa: $mdgriffith$elm_ui$Element$text('source'),
-				bK: 'https://github.com/seestevecode/elm-flipflop'
+				bK: 'https://github.com/seestevecode/flipflop-solitaire'
 			})
 		]));
 var $author$project$Main$viewGameType = function (gameType) {
