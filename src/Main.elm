@@ -599,7 +599,7 @@ viewCredits =
             }
         , text " - "
         , newTabLink []
-            { url = "https://github.com/seestevecode/elm-flipflop"
+            { url = "https://github.com/seestevecode/flipflop-solitaire"
             , label = text "source"
             }
         ]
